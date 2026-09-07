@@ -22,6 +22,13 @@ func runSelfTest() -> Int32 {
         check(s.power.totalWatts >= 0, "total power is negative")
         check(s.power.totalWatts < 500, "total power implausibly high: \(s.power.totalWatts)")
     }
+    check(s.network.downloadBytesPerSec >= 0 && s.network.uploadBytesPerSec >= 0, "network rate negative")
+    check(s.disk.readBytesPerSec >= 0 && s.disk.writeBytesPerSec >= 0, "disk rate negative")
+    check(s.disk.freeBytes <= s.disk.totalBytes, "disk free exceeds total")
+    check(s.disk.totalBytes > 0, "disk total is zero")
+    if s.battery.present {
+        check(s.battery.percent >= 0 && s.battery.percent <= 100, "battery percent out of range: \(s.battery.percent)")
+    }
 
     if failures.isEmpty {
         print("selftest PASS: cpu \(Int(s.cpu.usage))%, gpu \(s.gpu.available ? "\(Int(s.gpu.usage))%" : "n/a"), "

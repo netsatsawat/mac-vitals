@@ -8,6 +8,9 @@ public struct Snapshot: Codable, Sendable {
     public var gpu: GPUSnapshot
     public var memory: MemorySnapshot
     public var power: PowerSnapshot
+    public var network: NetworkSnapshot
+    public var disk: DiskSnapshot
+    public var battery: BatterySnapshot
 }
 
 public struct CPUSnapshot: Codable, Sendable {
@@ -54,6 +57,28 @@ public struct PowerSnapshot: Codable, Sendable {
     public var available: Bool
 }
 
+public struct NetworkSnapshot: Codable, Sendable {
+    public var uploadBytesPerSec: Double
+    public var downloadBytesPerSec: Double
+}
+
+public struct DiskSnapshot: Codable, Sendable {
+    public var readBytesPerSec: Double
+    public var writeBytesPerSec: Double
+    public var freeBytes: UInt64
+    public var totalBytes: UInt64
+}
+
+public struct BatterySnapshot: Codable, Sendable {
+    /// False on desktops with no battery.
+    public var present: Bool
+    /// Charge as a percentage, 0 to 100.
+    public var percent: Double
+    public var isCharging: Bool
+    /// Minutes to full when charging, to empty otherwise. Nil while estimating.
+    public var minutesRemaining: Int?
+}
+
 public extension Snapshot {
     /// A zeroed reading for a view's initial state, before the first real sample lands.
     static var placeholder: Snapshot {
@@ -64,7 +89,10 @@ public extension Snapshot {
             gpu: GPUSnapshot(usage: 0, available: false, provisional: true),
             memory: MemorySnapshot(totalBytes: 0, usedBytes: 0, wiredBytes: 0,
                                    compressedBytes: 0, appBytes: 0, usedPercent: 0),
-            power: PowerSnapshot(cpuWatts: 0, gpuWatts: 0, totalWatts: 0, available: false)
+            power: PowerSnapshot(cpuWatts: 0, gpuWatts: 0, totalWatts: 0, available: false),
+            network: NetworkSnapshot(uploadBytesPerSec: 0, downloadBytesPerSec: 0),
+            disk: DiskSnapshot(readBytesPerSec: 0, writeBytesPerSec: 0, freeBytes: 0, totalBytes: 0),
+            battery: BatterySnapshot(present: false, percent: 0, isCharging: false, minutesRemaining: nil)
         )
     }
 }

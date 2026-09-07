@@ -12,6 +12,9 @@ public final class Monitor {
     private let mem = MemReader()
     private let gpu = GPUReader()
     private let power = PowerReader()
+    private let network = NetworkReader()
+    private let disk = DiskReader()
+    private let battery = BatteryReader()
 
     public init() {}
 
@@ -22,7 +25,10 @@ public final class Monitor {
             cpu: cpu.read(),
             gpu: gpu.read(),
             memory: mem.read(),
-            power: power.read()
+            power: power.read(),
+            network: network.read(),
+            disk: disk.read(),
+            battery: battery.read()
         )
     }
 

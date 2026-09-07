@@ -44,6 +44,12 @@ func gb(_ bytes: UInt64) -> String {
     String(format: "%.2f GB", Double(bytes) / 1_073_741_824.0)
 }
 
+func rate(_ bytesPerSec: Double) -> String {
+    if bytesPerSec >= 1_048_576 { return String(format: "%.1f MB/s", bytesPerSec / 1_048_576) }
+    if bytesPerSec >= 1024 { return String(format: "%.0f KB/s", bytesPerSec / 1024) }
+    return String(format: "%.0f B/s", bytesPerSec)
+}
+
 func printHuman(_ s: Snapshot) {
     let cpu = s.cpu, gpu = s.gpu, mem = s.memory, pw = s.power
     print(String(format: "CPU  %5.1f%%   (E %4.1f%%  P %4.1f%%)", cpu.usage, cpu.efficiencyUsage, cpu.performanceUsage))
@@ -57,6 +63,13 @@ func printHuman(_ s: Snapshot) {
         print(String(format: "PWR  %.2f W   (CPU %.2f  GPU %.2f)", pw.totalWatts, pw.cpuWatts, pw.gpuWatts))
     } else {
         print("PWR     n/a")
+    }
+    let net = s.network, dsk = s.disk, bat = s.battery
+    print("NET  down \(rate(net.downloadBytesPerSec))   up \(rate(net.uploadBytesPerSec))")
+    print("DSK  read \(rate(dsk.readBytesPerSec))   write \(rate(dsk.writeBytesPerSec))   \(gb(dsk.freeBytes)) free / \(gb(dsk.totalBytes))")
+    if bat.present {
+        let rem = bat.minutesRemaining.map { "  (\($0 / 60)h \($0 % 60)m)" } ?? ""
+        print("BAT  \(Int(bat.percent))%   \(bat.isCharging ? "charging" : "on battery")\(rem)")
     }
 }
 
