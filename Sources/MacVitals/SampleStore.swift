@@ -2,23 +2,33 @@ import Foundation
 import Combine
 import VitalsCore
 
-/// Drives the `Monitor` on a 1 Hz timer and keeps a rolling minute of history
-/// for the sparklines. The views observe this. The CLI and MCP server talk to
-/// `Monitor` directly, so this GUI-only history layer stays out of the core.
+/// Drives the `Monitor` on a 1 Hz timer and retains an hour of history, so the
+/// full window can show the last minute, fifteen minutes, or hour. The popover
+/// and widget read the last sixty samples through the convenience accessors.
+/// The CLI and MCP server talk to `Monitor` directly, so this stays GUI-only.
 @MainActor
 final class SampleStore: ObservableObject {
     @Published private(set) var latest: Snapshot = .placeholder
-    @Published private(set) var cpuHistory: [Double] = []
-    @Published private(set) var gpuHistory: [Double] = []
-    @Published private(set) var memHistory: [Double] = []
+    @Published private(set) var history: [Snapshot] = []
 
     private let monitor = Monitor()
     private var timer: Timer?
-    private let capacity = 60
+    private let capacity = 3600 // one hour at 1 Hz
+
+    /// Last sixty seconds of each metric, for the small sparklines.
+    var cpuHistory: [Double] { history.suffix(60).map(\.cpu.usage) }
+    var gpuHistory: [Double] { history.suffix(60).map(\.gpu.usage) }
+    var memHistory: [Double] { history.suffix(60).map(\.memory.usedPercent) }
 
     init() {
         _ = monitor.sample() // prime the delta baseline
         start()
+    }
+
+    /// Seeded store with no live timer, for offscreen rendering and previews.
+    init(seed: [Snapshot]) {
+        history = seed
+        latest = seed.last ?? .placeholder
     }
 
     func start() {
@@ -36,13 +46,7 @@ final class SampleStore: ObservableObject {
     private func tick() {
         let s = monitor.sample()
         latest = s
-        push(&cpuHistory, s.cpu.usage)
-        push(&gpuHistory, s.gpu.usage)
-        push(&memHistory, s.memory.usedPercent)
-    }
-
-    private func push(_ buffer: inout [Double], _ value: Double) {
-        buffer.append(value)
-        if buffer.count > capacity { buffer.removeFirst(buffer.count - capacity) }
+        history.append(s)
+        if history.count > capacity { history.removeFirst(history.count - capacity) }
     }
 }

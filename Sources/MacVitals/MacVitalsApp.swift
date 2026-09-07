@@ -16,6 +16,12 @@ struct MacVitalsApp: App {
             MenuBarLabel(store: store)
         }
         .menuBarExtraStyle(.window)
+
+        Window("Mac Vitals", id: "main") {
+            MainView(store: store)
+        }
+        .defaultSize(width: 840, height: 620)
+        .windowResizability(.contentMinSize)
     }
 }
 
@@ -25,6 +31,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     let panel = FloatingPanelController()
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
+        let args = CommandLine.arguments
+        if let i = args.firstIndex(of: "--render-popover"), i + 1 < args.count {
+            RenderTool.renderPopover(to: args[i + 1])
+            NSApp.terminate(nil)
+        }
+        if let i = args.firstIndex(of: "--render"), i + 1 < args.count {
+            RenderTool.renderMainWindow(to: args[i + 1])
+            NSApp.terminate(nil)
+        }
     }
 }
 

@@ -33,10 +33,20 @@ It shows up three ways, over one engine:
 - **GPU** utilization from the hardware's own performance-state residency.
 - **Memory** used against total, the way Activity Monitor counts it.
 - **Power** in watts, per rail: CPU and GPU, read from the chip's energy counters.
+- **Network, disk, and battery** too: up and down throughput, read and write activity with free space, and charge.
+- **A full window** with every metric charted over the last minute, fifteen minutes, or hour.
 - **No password, ever.** Everything comes through Apple's IOReport interface as a normal user.
 - **Zero dependencies.** One Swift package, no runtime, no helper daemon, no kernel extension.
 - **Light and dark**, following the system, on native vibrancy.
 - **An MCP server** so an agent can ask what a build or a training run cost the machine.
+
+## The full window
+
+Open it from the popover for every metric charted over a selectable range.
+
+<div align="center">
+<img src="docs/window.png" alt="The Mac Vitals window: CPU, GPU, memory, power, network, and disk charted over the last fifteen minutes" width="840">
+</div>
 
 ## Install
 
@@ -149,10 +159,11 @@ If you want the most features today, `stats` is excellent. Mac Vitals is for peo
 - [x] Menu-bar item and popover
 - [x] Floating widget
 - [x] MCP server
+- [x] Full window with 1 min / 15 min / 1 hour history
+- [x] Network, disk, and battery
 - [ ] Calibrate GPU percent against `powermetrics` on M-series
 - [ ] **Task traces**: bracket a build or a run and get back what it cost (CPU, GPU, watt-hours), in the app and over MCP
 - [ ] Per-process attribution (what is using the machine)
-- [ ] Network and disk throughput
 - [ ] Sensors: temperature and fan
 - [ ] Launch at login toggle
 - [ ] Notarized release and a Homebrew cask

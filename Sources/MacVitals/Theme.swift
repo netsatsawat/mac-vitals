@@ -20,6 +20,8 @@ enum Palette {
                                dark:  NSColor(srgbRed: 0.039, green: 0.518, blue: 1, alpha: 1))
     static let good  = Color(red: 52/255, green: 199/255, blue: 89/255)
     static let amber = Color(red: 1, green: 0.624, blue: 0.039)
+    static let teal  = Color(red: 0.35, green: 0.78, blue: 0.98)
+    static let orange = Color(red: 1, green: 0.62, blue: 0.04)
 
     /// Load level to Apple's system-color ramp: green, to yellow, to orange, to red.
     static func load(_ pct: Double) -> Color {

@@ -11,6 +11,12 @@ public struct Snapshot: Codable, Sendable {
     public var network: NetworkSnapshot
     public var disk: DiskSnapshot
     public var battery: BatterySnapshot
+
+    public init(timestamp: Date, cpu: CPUSnapshot, gpu: GPUSnapshot, memory: MemorySnapshot,
+                power: PowerSnapshot, network: NetworkSnapshot, disk: DiskSnapshot, battery: BatterySnapshot) {
+        self.timestamp = timestamp; self.cpu = cpu; self.gpu = gpu; self.memory = memory
+        self.power = power; self.network = network; self.disk = disk; self.battery = battery
+    }
 }
 
 public struct CPUSnapshot: Codable, Sendable {
@@ -24,6 +30,13 @@ public struct CPUSnapshot: Codable, Sendable {
     public var perCore: [Double]
     public var efficiencyCoreCount: Int
     public var performanceCoreCount: Int
+
+    public init(usage: Double, efficiencyUsage: Double, performanceUsage: Double,
+                perCore: [Double], efficiencyCoreCount: Int, performanceCoreCount: Int) {
+        self.usage = usage; self.efficiencyUsage = efficiencyUsage; self.performanceUsage = performanceUsage
+        self.perCore = perCore; self.efficiencyCoreCount = efficiencyCoreCount
+        self.performanceCoreCount = performanceCoreCount
+    }
 }
 
 public struct GPUSnapshot: Codable, Sendable {
@@ -31,9 +44,13 @@ public struct GPUSnapshot: Codable, Sendable {
     public var usage: Double
     /// Whether the reading came from IOReport (false means unavailable on this machine).
     public var available: Bool
-    /// True until the residency→utilization mapping is calibrated against
+    /// True until the residency->utilization mapping is calibrated against
     /// `powermetrics` on this chip family. See docs/PRD.md §5 and GPUReader.
     public var provisional: Bool
+
+    public init(usage: Double, available: Bool, provisional: Bool) {
+        self.usage = usage; self.available = available; self.provisional = provisional
+    }
 }
 
 public struct MemorySnapshot: Codable, Sendable {
@@ -44,6 +61,12 @@ public struct MemorySnapshot: Codable, Sendable {
     public var appBytes: UInt64
     /// Used as a fraction of total, 0 to 100.
     public var usedPercent: Double
+
+    public init(totalBytes: UInt64, usedBytes: UInt64, wiredBytes: UInt64,
+                compressedBytes: UInt64, appBytes: UInt64, usedPercent: Double) {
+        self.totalBytes = totalBytes; self.usedBytes = usedBytes; self.wiredBytes = wiredBytes
+        self.compressedBytes = compressedBytes; self.appBytes = appBytes; self.usedPercent = usedPercent
+    }
 }
 
 public struct PowerSnapshot: Codable, Sendable {
@@ -55,11 +78,19 @@ public struct PowerSnapshot: Codable, Sendable {
     public var totalWatts: Double
     /// Whether power came from IOReport (false means unavailable).
     public var available: Bool
+
+    public init(cpuWatts: Double, gpuWatts: Double, totalWatts: Double, available: Bool) {
+        self.cpuWatts = cpuWatts; self.gpuWatts = gpuWatts; self.totalWatts = totalWatts; self.available = available
+    }
 }
 
 public struct NetworkSnapshot: Codable, Sendable {
     public var uploadBytesPerSec: Double
     public var downloadBytesPerSec: Double
+
+    public init(uploadBytesPerSec: Double, downloadBytesPerSec: Double) {
+        self.uploadBytesPerSec = uploadBytesPerSec; self.downloadBytesPerSec = downloadBytesPerSec
+    }
 }
 
 public struct DiskSnapshot: Codable, Sendable {
@@ -67,6 +98,11 @@ public struct DiskSnapshot: Codable, Sendable {
     public var writeBytesPerSec: Double
     public var freeBytes: UInt64
     public var totalBytes: UInt64
+
+    public init(readBytesPerSec: Double, writeBytesPerSec: Double, freeBytes: UInt64, totalBytes: UInt64) {
+        self.readBytesPerSec = readBytesPerSec; self.writeBytesPerSec = writeBytesPerSec
+        self.freeBytes = freeBytes; self.totalBytes = totalBytes
+    }
 }
 
 public struct BatterySnapshot: Codable, Sendable {
@@ -77,6 +113,11 @@ public struct BatterySnapshot: Codable, Sendable {
     public var isCharging: Bool
     /// Minutes to full when charging, to empty otherwise. Nil while estimating.
     public var minutesRemaining: Int?
+
+    public init(present: Bool, percent: Double, isCharging: Bool, minutesRemaining: Int?) {
+        self.present = present; self.percent = percent; self.isCharging = isCharging
+        self.minutesRemaining = minutesRemaining
+    }
 }
 
 public extension Snapshot {
