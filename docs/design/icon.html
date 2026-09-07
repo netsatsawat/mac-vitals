@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Mac Vitals app icon</title>
+<style>
+  * { margin: 0; padding: 0; }
+  html, body { background: transparent; }
+  #stage { width: 1024px; height: 1024px; }
+</style>
+</head>
+<body>
+<div id="stage"></div>
+<script>
+// Concept A — gauge, as a full macOS app icon on a transparent 1024 canvas with
+// the standard ~82% icon grid (transparent margin; the system adds the shadow).
+function arc(cx, cy, r, a0, a1) {
+  const p0 = [cx + r*Math.cos(a0*Math.PI/180), cy + r*Math.sin(a0*Math.PI/180)];
+  const p1 = [cx + r*Math.cos(a1*Math.PI/180), cy + r*Math.sin(a1*Math.PI/180)];
+  const large = (a1 - a0) % 360 > 180 ? 1 : 0;
+  return `M ${p0[0].toFixed(1)} ${p0[1].toFixed(1)} A ${r} ${r} 0 ${large} 1 ${p1[0].toFixed(1)} ${p1[1].toFixed(1)}`;
+}
+const S = 1024, m = 92, side = S - 2*m, rx = side * 0.2237;       // squircle
+const cx = S/2, cy = S/2 + 20, R = 232, sw = 92;                 // gauge
+document.getElementById('stage').innerHTML = `
+<svg xmlns="http://www.w3.org/2000/svg" width="${S}" height="${S}" viewBox="0 0 ${S} ${S}">
+  <defs>
+    <radialGradient id="bg" cx="30%" cy="20%" r="120%">
+      <stop offset="0" stop-color="#34343d"/><stop offset="55%" stop-color="#212128"/><stop offset="100%" stop-color="#121216"/>
+    </radialGradient>
+    <linearGradient id="ramp" x1="0" y1="1" x2="1" y2="0">
+      <stop offset="0" stop-color="#34c759"/><stop offset="0.55" stop-color="#ffcc00"/><stop offset="1" stop-color="#ff3b30"/>
+    </linearGradient>
+    <linearGradient id="hi" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.14"/><stop offset="0.18" stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+  <rect x="${m}" y="${m}" width="${side}" height="${side}" rx="${rx}" fill="url(#bg)"/>
+  <rect x="${m}" y="${m}" width="${side}" height="${side}" rx="${rx}" fill="url(#hi)"/>
+  <path d="${arc(cx, cy, R, 135, 405)}" fill="none" stroke="rgba(255,255,255,0.10)" stroke-width="${sw}" stroke-linecap="round"/>
+  <path d="${arc(cx, cy, R, 135, 338)}" fill="none" stroke="url(#ramp)" stroke-width="${sw}" stroke-linecap="round"/>
+  <circle cx="${cx}" cy="${cy}" r="46" fill="#f5f5f7"/>
+</svg>`;
+</script>
+</body>
+</html>

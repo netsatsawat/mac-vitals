@@ -158,7 +158,7 @@
   <section class="scene dark">
     <div class="menubar">
       <span class="apple"></span>
-      <span style="font-weight:600">Xcode</span><span>File</span><span>Edit</span>
+      <span style="font-weight:600">Mac Vitals</span><span>View</span><span>Window</span><span>Help</span>
       <span class="spacer"></span>
       <div class="vit-item active" id="mb-dark"></div>
       <span class="extra" id="ext-dark"></span>
@@ -174,7 +174,7 @@
   <section class="scene light">
     <div class="menubar">
       <span class="apple"></span>
-      <span style="font-weight:600">Xcode</span><span>File</span><span>Edit</span>
+      <span style="font-weight:600">Mac Vitals</span><span>View</span><span>Window</span><span>Help</span>
       <span class="spacer"></span>
       <div class="vit-item active" id="mb-light"></div>
       <span class="extra" id="ext-light"></span>
@@ -238,6 +238,7 @@ function spark(series, color, w=50, h=24){
     <circle cx="${pts[pts.length-1][0].toFixed(1)}" cy="${pts[pts.length-1][1].toFixed(1)}" r="2" fill="${color}"/></svg>`;
 }
 const I = {
+  gauge:`<svg viewBox="0 0 24 24" fill="none"><defs><linearGradient id="gmgrad" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#34c759"/><stop offset=".55" stop-color="#ffcc00"/><stop offset="1" stop-color="#ff3b30"/></linearGradient></defs><g transform="rotate(135 12 12)"><circle cx="12" cy="12" r="7.5" stroke="currentColor" stroke-opacity="0.16" stroke-width="3.2" stroke-linecap="round" stroke-dasharray="35.3 11.8"/><circle cx="12" cy="12" r="7.5" stroke="url(#gmgrad)" stroke-width="3.2" stroke-linecap="round" stroke-dasharray="26.4 20.7"/></g><circle cx="12" cy="12" r="1.7" fill="currentColor"/></svg>`,
   cpu:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="7" width="10" height="10" rx="2.4"/><path d="M10 2v3M14 2v3M10 19v3M14 19v3M2 10h3M2 14h3M19 10h3M19 14h3"/></svg>`,
   gpu:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="6" width="19" height="12" rx="2.6"/><circle cx="9" cy="12" r="2.6"/><path d="M15 10.5h4M15 13.5h4"/></svg>`,
   mem:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="9" rx="1.8"/><path d="M6.5 8V5.5M11 8V5.5M15.5 8V5.5M7 12v2M12 12v2M17 12v2"/></svg>`,
@@ -252,7 +253,7 @@ function widget(d){
   const cpuC=loadColor(d.cpu.usage), gpuC=loadColor(d.gpu.usage);
   const bars = d.cpu.cores.map(v=>`<i><b style="height:${Math.max(8,v)}%;background:${loadColor(v)}"></b></i>`).join('');
   return `
-  <div class="head"><span class="mark">${I.cpu}</span><h1>Mac Vitals</h1><span class="live"><i></i>Live</span></div>
+  <div class="head"><span class="mark">${I.gauge}</span><h1>Mac Vitals</h1><span class="live"><i></i>Live</span></div>
   <div class="rings">
     <div class="gauge"><div class="ring">${ring(d.cpu.usage,cpuC)}<div class="cap"><span class="pct">${pctHTML(d.cpu.usage)}</span></div></div>
       <div class="lbl">${I.cpu} CPU</div><div class="sub">E ${d.cpu.e} · P ${d.cpu.p}</div></div>
@@ -287,7 +288,7 @@ function popover(d){
     prow({name:'Power', ic:I.bolt, tint:'#ff9f0a', val:`${d.pwr.total.toFixed(1)}<u>W</u>`, bar:null, sub:`CPU ${d.pwr.cpu.toFixed(1)} · GPU ${d.pwr.gpu.toFixed(1)}`, s:null}),
   ].join('');
   return `<span class="tail"></span>
-    <div class="head"><span class="mark">${I.cpu}</span><h1>Mac Vitals</h1><span class="live"><i></i>Live</span></div>
+    <div class="head"><span class="mark">${I.gauge}</span><h1>Mac Vitals</h1><span class="live"><i></i>Live</span></div>
     <div class="plist">${rows}</div>
     <div class="pfoot"><span class="pill"><i style="background:#34c759"></i>Pressure normal</span><span class="btn">Show widget ⌥⌘V</span></div>`;
 }

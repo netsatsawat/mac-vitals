@@ -18,8 +18,7 @@ func gbString(_ bytes: UInt64) -> String {
 struct SurfaceHeader: View {
     var body: some View {
         HStack(spacing: 8) {
-            Image(systemName: Sym.cpu).font(.system(size: 13, weight: .semibold))
-                .foregroundStyle(Palette.ink.opacity(0.9))
+            GaugeMark(size: 17)
             Text("Mac Vitals").font(.system(size: 13, weight: .semibold)).foregroundStyle(Palette.ink)
             Spacer(minLength: 8)
             HStack(spacing: 5) {

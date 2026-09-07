@@ -13,6 +13,9 @@ rm -rf "$APP"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 cp "$BIN" "$APP/Contents/MacOS/MacVitals"
 cp scripts/Info.plist "$APP/Contents/Info.plist"
+if [ -f scripts/AppIcon.icns ]; then
+  cp scripts/AppIcon.icns "$APP/Contents/Resources/AppIcon.icns"
+fi
 
 # Ad-hoc signature so a locally built, unnotarized app is allowed to run.
 codesign --force --sign - "$APP" >/dev/null 2>&1 || true

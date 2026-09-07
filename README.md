@@ -150,7 +150,10 @@ If you want the most features today, `stats` is excellent. Mac Vitals is for peo
 - [x] Floating widget
 - [x] MCP server
 - [ ] Calibrate GPU percent against `powermetrics` on M-series
+- [ ] **Task traces**: bracket a build or a run and get back what it cost (CPU, GPU, watt-hours), in the app and over MCP
+- [ ] Per-process attribution (what is using the machine)
 - [ ] Network and disk throughput
+- [ ] Sensors: temperature and fan
 - [ ] Launch at login toggle
 - [ ] Notarized release and a Homebrew cask
 

@@ -239,3 +239,25 @@ A monitor that shows wrong numbers is worse than no monitor.
   and a first tagged release.
 - **P5, MCP server.** `vitals --mcp` over the same engine, read-only tools, an example agent
   config, and docs for adding it to Claude Code and other MCP clients.
+
+## 14. Adding on top of Activity Monitor and Stats
+
+Two incumbents set the bar. Activity Monitor's real strength is per-process attribution
+and energy impact, but it is a window you open, with no widget and nothing else can read
+it. Stats is the feature king: nine modules (CPU, GPU, RAM, disk, sensors, network,
+battery, Bluetooth, clock), per-process top lists, temperatures and fans, notifications,
+and deep menu-bar customization.
+
+We do not win by out-featuring Stats. We add three things neither of them has:
+
+1. **A real floating desktop widget.** Already built.
+2. **An MCP interface.** An agent can read the machine. Already built.
+3. **Task traces (the headline).** Bracket a piece of work, a build or a training run,
+   and get back what it cost: CPU, GPU, memory, and watt-hours over that window. Neither
+   incumbent frames monitoring as "measure this task," and it sits on our two unique
+   strengths, per-rail power and MCP. A coding agent can wrap its own build in a trace and
+   report the energy cost. That is the AI-native system monitor nobody else is building.
+
+Parity worth reaching over time, none of it the wedge: per-process top lists, disk and
+network throughput, sensors (temperature and fan), battery, threshold alerts, and a choice
+of which modules show in the menu bar.
