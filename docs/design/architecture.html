@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Mac Vitals architecture</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { width: 1200px; min-height: 560px;
+    font-family: -apple-system, "SF Pro Text", Helvetica, Arial, sans-serif;
+    background: radial-gradient(125% 100% at 15% 0%, #2a2350 0%, #1a1636 45%, #100e22 100%);
+    color: #f5f5f7; padding: 34px 40px; position: relative; }
+  .num { font-family: "SF Mono", ui-monospace, Menlo, monospace; }
+  h1 { font-size: 19px; font-weight: 600; letter-spacing: -.01em; }
+  .sub { font-size: 12.5px; color: rgba(235,235,245,.5); margin-top: 3px; }
+
+  .band-label { font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase;
+    color: rgba(235,235,245,.42); margin: 22px 0 11px; }
+
+  .row { display: flex; gap: 14px; }
+  .card { flex: 1; border-radius: 15px; padding: 14px 15px;
+    background: rgba(255,255,255,.045); border: 1px solid rgba(255,255,255,.09); }
+  .card .t { display: flex; align-items: center; gap: 8px; font-size: 13.5px; font-weight: 600; }
+  .card .d { font-size: 11.5px; color: rgba(235,235,245,.55); margin-top: 5px; line-height: 1.45; }
+  .dot { width: 9px; height: 9px; border-radius: 3px; flex: none; }
+
+  .engine { margin: 0 auto; border-radius: 16px; padding: 16px 20px; text-align: center;
+    background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.12);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.08); }
+  .engine .t { font-size: 15px; font-weight: 700; }
+  .engine .d { font-size: 12px; color: rgba(235,235,245,.6); margin-top: 4px; }
+
+  .store { max-width: 560px; }
+  .flow { text-align: center; color: rgba(235,235,245,.3); font-size: 15px; letter-spacing: 4px; margin: 9px 0; }
+  .pill { display: inline-flex; gap: 8px; align-items: center; font-size: 11px; color: rgba(235,235,245,.6);
+    background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.09);
+    padding: 4px 10px; border-radius: 999px; }
+  .badge { position: absolute; top: 40px; right: 40px; display: flex; gap: 8px; }
+  .badge span { font-size: 11px; font-weight: 600; padding: 5px 11px; border-radius: 999px;
+    background: rgba(52,199,89,.14); color: #34c759; border: 1px solid rgba(52,199,89,.25); }
+  .badge .b2 { background: rgba(10,132,255,.14); color: #4aa3ff; border-color: rgba(10,132,255,.25); }
+</style>
+</head>
+<body>
+  <h1>Mac Vitals architecture</h1>
+  <div class="sub">Five faces, one engine, one set of no-sudo sensors.</div>
+  <div class="badge"><span>no sudo</span><span class="b2">no dependencies</span></div>
+
+  <div class="band-label">Faces: what you look at</div>
+  <div class="row" id="faces"></div>
+
+  <div class="flow">▲ &nbsp; ▲ &nbsp; ▲</div>
+  <div class="engine store">
+    <div class="t">SampleStore</div>
+    <div class="d">1 Hz timer · rolling history: <span class="num">1&nbsp;s</span> in memory, <span class="num">1&nbsp;min</span> and <span class="num">1&nbsp;hour</span> averages on disk</div>
+    <div style="margin-top:10px; display:flex; gap:8px; justify-content:center; flex-wrap:wrap">
+      <span class="pill">typed Snapshot</span><span class="pill">ranges 1m → 365d + YTD</span><span class="pill">task traces</span>
+    </div>
+  </div>
+  <div class="flow">▲</div>
+  <div class="engine" style="max-width:420px">
+    <div class="t">VitalsCore</div>
+    <div class="d">pure Swift, no UI · every metric read once, surfaced in each face</div>
+  </div>
+  <div class="flow">▲ &nbsp; ▲ &nbsp; ▲ &nbsp; ▲ &nbsp; ▲</div>
+
+  <div class="band-label">Sensors: where the numbers come from</div>
+  <div class="row" id="sensors"></div>
+
+<script>
+const faces = [
+  ["#34c759","Menu bar","CPU · GPU · MEM · net, at a glance"],
+  ["#0a84ff","Popover","every metric with a sparkline"],
+  ["#ff9f0a","Floating widget","rings on the desktop"],
+  ["#c9c9cf","CLI","--json · --watch · --trace"],
+  ["#af52de","MCP server","get_vitals · start/stop_trace"],
+];
+const sensors = [
+  ["#34c759","IOReport","GPU %, per-rail power"],
+  ["#0a84ff","Mach","CPU, per-core, memory"],
+  ["#5ac8fa","getifaddrs","network up / down"],
+  ["#ff9f0a","IOKit","disk, battery"],
+  ["#ff3b30","SMC","temperature, fan"],
+];
+const card = ([c,t,d]) => `<div class="card"><div class="t"><span class="dot" style="background:${c}"></span>${t}</div><div class="d">${d}</div></div>`;
+document.getElementById('faces').innerHTML = faces.map(card).join('');
+document.getElementById('sensors').innerHTML = sensors.map(card).join('');
+</script>
+</body>
+</html>

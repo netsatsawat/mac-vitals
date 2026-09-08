@@ -183,7 +183,7 @@ sensors core. That is why the MCP interface costs so little once the CLI exists.
   read-only tools over stdio. Local only, no network, no side effects. An agent can read the
   machine and never change it.
 
-## 8. Correctness, and how we defend it
+## 8. Correctness
 
 A monitor that shows wrong numbers is worse than no monitor.
 

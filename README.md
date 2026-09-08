@@ -113,28 +113,21 @@ Two tools are exposed:
 | `get_vitals_history` | Per-second history for up to the last 60 seconds of CPU%, GPU%, memory%, and watts. |
 | `start_trace` / `stop_trace` | Bracket a task. `stop_trace` returns what it cost: CPU and GPU average and peak, average watts and energy in watt-hours, network and disk totals, and peak temperature. |
 
-They are read-only. The agent can see the machine and never change it. The trace tools are the point: an agent wraps its own build in `start_trace` … `stop_trace` and gets the energy and resource cost back.
+They are read-only. The agent can see the machine and never change it. An agent can wrap its own build in `start_trace` … `stop_trace` and get the energy and resource cost back. Full setup and examples are in [docs/MCP.md](docs/MCP.md).
 
 ## How it works
 
-Apple Silicon exposes its telemetry through a private framework called IOReport, the same source `powermetrics` reads. The difference is that a normal user can subscribe to it directly, with no root and no entitlement, once you resolve the symbols yourself.
+Five front-ends read from one Swift engine, which reads every metric from the system as a normal user, with no root and no entitlement.
 
-```
-   ┌──────────────┐   ┌──────────────┐   ┌──────────────┐
-   │  GUI (SwiftUI)│   │ CLI --json   │   │ MCP --mcp    │
-   │  menu bar +   │   │ scripts, CI  │   │ agent-facing │
-   │  widget       │   │              │   │ read-only    │
-   └──────┬───────┘   └──────┬───────┘   └──────┬───────┘
-          └──────────────────┼──────────────────┘
-                    ┌─────────▼─────────┐
-                    │   Sensors (core)  │
-                    │  IOReport · Mach  │
-                    └───────────────────┘
-```
+<div align="center">
+<img src="docs/architecture.png" alt="Mac Vitals architecture: five faces (menu bar, popover, widget, CLI, MCP) over one engine, over no-sudo sensors" width="900">
+</div>
 
-- **CPU** comes from Mach's `host_processor_info`, diffed per core each second.
-- **Memory** comes from `host_statistics64` plus `hw.memsize`.
-- **GPU and power** come from IOReport, loaded at runtime from `/usr/lib/libIOReport.dylib`. Those private symbols live in one file, so if a future macOS changes them, exactly one place fails and says so.
+- **CPU and memory** from Mach (`host_processor_info` diffed per core, `host_statistics64`, `hw.memsize`).
+- **GPU and power** from IOReport, loaded at runtime from `/usr/lib/libIOReport.dylib`. Those private symbols live in one file, so a future macOS change fails in one obvious place.
+- **Network** from `getifaddrs`, **disk and battery** from IOKit, **temperature and fan** from the SMC.
+
+For the agent interface, see [docs/MCP.md](docs/MCP.md).
 
 ### A note on GPU percent
 

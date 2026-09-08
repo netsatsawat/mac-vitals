@@ -1,8 +1,8 @@
 # Contributing to Mac Vitals
 
-Thanks for looking. Mac Vitals is meant to stay small, readable, and dependency-free, so contributions that keep it that way are the most welcome.
+Mac Vitals aims to stay small, readable, and dependency-free. Contributions that keep it that way are welcome.
 
-## Getting set up
+## Setup
 
 You need macOS 14 or later on Apple Silicon and the Xcode Command Line Tools.
 
@@ -19,11 +19,12 @@ swift build
 - `Sources/VitalsCore` is the engine and has no UI. The readers, the snapshot types, and the IOReport binding live here.
 - `Sources/vitals` is the headless CLI and the MCP server.
 - `Sources/MacVitals` is the SwiftUI app: menu-bar item, popover, and floating widget.
-- `docs/` holds the PRD, the design mockup, and the README hero.
+- `docs/` holds the PRD, the design mockup, the MCP guide, and the README images.
+- `scripts/` holds the app build, the icon and hero pipelines, the GPU calibration harness, and the MCP test.
 
 Three front-ends sit on one engine, so a new metric is added once in `VitalsCore` and then surfaced in each face.
 
-## The rules that keep it clean
+## Constraints
 
 - **No third-party dependencies.** If you reach for a package, open an issue first and make the case.
 - **Private symbols stay in one file.** Everything undocumented that Apple exposes through IOReport is resolved in `Sources/VitalsCore/IOReport.swift`. Add new private symbols there, with a comment, so a future macOS change fails in one obvious place.
@@ -41,6 +42,7 @@ Three front-ends sit on one engine, so a new metric is added once in `VitalsCore
 ```bash
 swift build -c release
 .build/release/vitals --selftest
+python3 scripts/test-mcp.py .build/release/vitals
 swift test        # needs a full Xcode toolchain, not just Command Line Tools
 ```
 
