@@ -6,11 +6,12 @@ import VitalsCore
 struct PopoverView: View {
     @ObservedObject var store: SampleStore
     var onToggleWidget: () -> Void
-    var onRunInBackground: () -> Void
+    var onHideMenuBar: () -> Void
     var onQuit: () -> Void
     @Environment(\.openWindow) private var openWindow
     @AppStorage("menuBarFull") private var menuBarFull: Bool = true
     @AppStorage("didPromptLoginItem") private var didPromptLoginItem: Bool = false
+    @AppStorage("runInBackground") private var runInBackground: Bool = false
 
     private func openMainWindow() {
         NSApp.setActivationPolicy(.regular) // show the Dock icon while the window is open
@@ -142,12 +143,17 @@ struct PopoverView: View {
                     get: { LoginItem.isEnabled },
                     set: { LoginItem.setEnabled($0); didPromptLoginItem = true }
                 ))
-                Button("Run in Background…", action: onRunInBackground)
+                Toggle("Show Menu Bar Icon", isOn: Binding(
+                    get: { !runInBackground },
+                    set: { show in if show { runInBackground = false } else { onHideMenuBar() } }
+                ))
                 Divider()
                 Toggle("Full menu-bar readout", isOn: $menuBarFull)
                     .keyboardShortcut("m", modifiers: [.command, .shift])
-                Text(menuBarFull ? "Showing CPU, GPU, memory, network"
-                                 : "Showing CPU and GPU")
+                    .disabled(runInBackground)
+                Text(runInBackground ? "Menu bar icon hidden, still recording"
+                                     : (menuBarFull ? "Showing CPU, GPU, memory, network"
+                                                    : "Showing CPU and GPU"))
                 Divider()
                 Button("Quit Mac Vitals", action: onQuit)
             } label: {

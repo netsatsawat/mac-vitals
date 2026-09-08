@@ -18,7 +18,7 @@ struct MacVitalsApp: App {
             PopoverView(
                 store: store,
                 onToggleWidget: { delegate.panel.toggle(store: store) },
-                onRunInBackground: { delegate.enterBackgroundMode() },
+                onHideMenuBar: { delegate.enterBackgroundMode() },
                 onQuit: { NSApp.terminate(nil) }
             )
         } label: {
@@ -113,8 +113,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     /// Explain background mode plainly, then hide the menu-bar icon if the user
     /// agrees. The app keeps sampling and persisting with no icon; reopening it
-    /// brings the icon back.
+    /// brings the icon back. Dispatched so the menu that triggered it dismisses
+    /// before the modal appears.
     func enterBackgroundMode() {
+        DispatchQueue.main.async { [weak self] in self?.showBackgroundAlert() }
+    }
+
+    private func showBackgroundAlert() {
         let alert = NSAlert()
         alert.messageText = "Run Mac Vitals in the background?"
         alert.informativeText = """

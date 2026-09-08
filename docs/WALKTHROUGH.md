@@ -45,11 +45,11 @@ This matters because of one honest limit: nothing is collected while the app is 
 
 It is opt-in. The app never enables it on its own. Turn it on from the hint, or any time later from the `⋯` menu. Under the hood it registers the app as a login item through macOS's own mechanism, with no helper and no privileged step, and you can revoke it in System Settings under General, Login Items. Closing just the full window does not quit the app, so it keeps sampling in the menu bar either way.
 
-### Running it invisibly
+### Menu bar, or none
 
-If you want the recording without the menu-bar icon, the `⋯` menu has **Run in Background**. It shows a short explanation, then hides the icon and keeps the app running and sampling with no interface at all. Everything still stays on your Mac, and the cost is the same one read a second.
+You choose whether the app shows a menu-bar icon. The `⋯` menu has a **Show Menu Bar Icon** toggle, on by default. Turn it off and the app shows a short explanation, then keeps running and sampling with no icon and no interface at all. Everything still stays on your Mac, and the cost is the same one read a second.
 
-To bring the icon back, open Mac Vitals again from Spotlight or your Applications folder. The app is still running, so opening it just makes the icon reappear, and from there you can open the window or quit. Turned on together with Launch at Login, this gives you a recorder that starts with your Mac and stays completely out of the way.
+To bring the icon back, open Mac Vitals again from Spotlight or your Applications folder. The app is still running, so opening it just makes the icon reappear, and from there you can open the window or quit. With the icon off and Launch at Login on, you get a recorder that starts with your Mac and stays completely out of the way.
 
 ## The floating widget
 

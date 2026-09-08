@@ -12,10 +12,10 @@ All notable changes to this project are recorded here. The format follows
   helper and no privileged step, and the app never starts itself unasked.
   Diagnostic flags (`--login-status`, `--login-register`, `--login-unregister`)
   verify the registration from the terminal.
-- Run in Background, an opt-in in the `⋯` menu that hides the menu-bar icon and
-  keeps recording with no interface, after a plain explanation of what it does.
-  Reopening the app brings the icon back. Pairs with Launch at Login for a quiet
-  always-on recorder.
+- A "Show Menu Bar Icon" toggle in the `⋯` menu, on by default. Turn it off and
+  the app keeps recording with no icon and no interface, after a plain
+  explanation of what that means. Reopening the app brings the icon back. Pairs
+  with Launch at Login for a quiet always-on recorder.
 - A full walkthrough in [docs/WALKTHROUGH.md](docs/WALKTHROUGH.md) covering every
   surface from install to the MCP interface.
 
