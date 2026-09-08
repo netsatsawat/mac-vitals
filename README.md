@@ -4,8 +4,8 @@
 
 # Mac Vitals
 
-**A live CPU, GPU, memory, and power monitor for Apple Silicon.**
-No password. No dependencies. And the same engine speaks MCP, so your coding agent can read the machine too.
+**An open-source macOS menu bar system monitor for Apple Silicon.**
+Live CPU, GPU, memory, power, temperature, and fan, one glance away. No password. No dependencies. And the same engine speaks MCP, so your coding agent can read the machine too.
 
 [![CI](https://github.com/netsatsawat/mac-vitals/actions/workflows/ci.yml/badge.svg)](https://github.com/netsatsawat/mac-vitals/actions/workflows/ci.yml)
 ![Platform](https://img.shields.io/badge/macOS-14%2B-black?logo=apple)
@@ -44,7 +44,7 @@ It shows up three ways, over one engine:
 
 ## The full window
 
-Open it from the popover for every metric charted over a selectable range, from one minute of live detail up to a year, plus year-to-date. Three resolutions keep it cheap: live seconds in memory for the short ranges, one-minute averages persisted for about a week, and one-minute samples rolled up into one-hour averages persisted for over a year. All told a few MB, and the long ranges survive quits and fill in as the app runs.
+Open it from the popover for every metric charted over a selectable range, from one minute of live detail up to a year, plus year-to-date. Three resolutions keep it cheap: per-second detail for the last hour, one-minute averages for about a week, and one-hour averages for over a year. Each resolution is written to its own file, so every range survives a quit and the long ones fill from what is already on disk. A few MB in all. How it holds together across restarts is written up in [docs/history-persistence.md](docs/history-persistence.md).
 
 <div align="center">
 <img src="docs/window.png" alt="The Mac Vitals window: CPU, GPU, memory, power, network, and disk charted over the last fifteen minutes" width="840">
@@ -152,7 +152,7 @@ Mac Vitals is a newcomer on a well-served shelf. It competes on three things, no
 | Open source | ✅ | ✅ | ✅ | |
 | Price | free | free | free | paid |
 
-If you want the most features today, `stats` is excellent. Mac Vitals is for people who want the native look, the floating gadget, and an interface their agent can read.
+If you want the most features today, `stats` is excellent. Mac Vitals is for people who want the native look, the floating gadget, and an interface their agent can read. Think of it as a free, open-source alternative to iStat Menus, and a native-feeling companion to stats and macmon.
 
 ## Roadmap
 
