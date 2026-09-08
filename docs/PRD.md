@@ -113,13 +113,14 @@ the GPU in nanojoules, so the reader now takes each channel's own unit label and
 joules. Wattage comes out correct. Under a sustained Metal load, GPU power rose from 6 to 16 W
 while CPU power fell from 13 to 7 W, exactly as work shifted onto the GPU.
 
-**Open calibration item, needs one `powermetrics` ground-truth.** GPU utilization from
-performance-state residency assumes state 0 is idle. That holds on M1 to M4. On the M5, `OFF` stays
-near 0% while the display is on and the GPU parks in `P1` instead, so the naive formula reads a
-flat 100%. The interim reader treats `OFF` and `P1` as idle and flags the value `provisional`.
-Locking the mapping down needs one `sudo powermetrics --samplers gpu_power` run compared against
-our reading, on the dev machine, once. GPU power in watts is already correct, and it is the
-trustworthy GPU signal until the percentage is calibrated.
+**Calibrated against `powermetrics` (M5).** GPU utilization is `1 - OFF/total`, where `OFF`
+(state 0) is the idle share and `P1` upward are active frequencies. `powermetrics` reports its
+own "GPU active residency" the same way: its idle residency is exactly the `OFF` time, and its
+338 to 1620 MHz frequency buckets are `P1` to `P13`. Verified with `scripts/calibrate/`: under a
+sustained Metal load both read 100%, and at idle both read the small `P1` share the compositor
+keeps the GPU awake for (about 17%, with GPU power near zero). The reading is no longer
+provisional. GPU power in watts is exact too. The earlier "flat 100%" was a busy machine, not an
+idle one.
 
 Nothing in the core data path is guesswork. What is left is UI polish and generalising across
 chips (§10), not whether the numbers are reachable.

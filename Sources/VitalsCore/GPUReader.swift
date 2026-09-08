@@ -4,14 +4,14 @@ import Foundation
 ///
 /// The channel reports residency across the GPU's power states, and every state's
 /// residencies sum to wall-clock (a 24 MHz tick base), so utilization is the share
-/// of time spent outside the idle states. The subtlety is *which* state is idle.
+/// of time spent outside idle. Idle is state index 0 (`OFF`, the GPU powered down);
+/// `P1` and above are active frequencies.
 ///
-/// On M1 to M4 the tools of record treat state index 0 (`OFF`) as idle. On the M5,
-/// measured directly, `OFF` stays near 0% whenever the display is on, and the GPU
-/// parks in its lowest performance state (`P1`) instead. So here we treat `OFF` and the
-/// lowest performance state as idle. This is a defensible heuristic, not a
-/// calibrated truth: the exact mapping is validated against `powermetrics` once per
-/// chip family (PRD §5), until which point `provisional` stays true.
+/// Calibrated against `powermetrics --samplers gpu_power` on the M5: powermetrics
+/// reports "GPU active residency" as `1 - idle`, where its idle residency is exactly
+/// the `OFF` time and its active-frequency buckets (338…1620 MHz) are `P1…P13`. Under
+/// a sustained Metal load both read 100%; at idle both read the small `P1` share the
+/// compositor keeps alive. So `usage = 1 - OFF/total`, and it is no longer provisional.
 final class GPUReader {
     private var subscription: IOReportSubscription?
 
@@ -23,7 +23,7 @@ final class GPUReader {
 
     func read() -> GPUSnapshot {
         guard let sub = subscription else {
-            return GPUSnapshot(usage: 0, available: false, provisional: true)
+            return GPUSnapshot(usage: 0, available: false, provisional: false)
         }
 
         var total: Int64 = 0
@@ -38,15 +38,15 @@ final class GPUReader {
             for i in 0..<n {
                 let r = chan.residency(i)
                 total += r
-                if i == 0 || i == 1 { idle += r } // OFF + P1 (parked)
+                if i == 0 { idle += r } // OFF is the only idle state (calibrated vs powermetrics)
             }
         }
 
         // First sample (no baseline) or channel absent this interval.
         guard elapsed != nil, sawChannel, total > 0 else {
-            return GPUSnapshot(usage: 0, available: subscription != nil, provisional: true)
+            return GPUSnapshot(usage: 0, available: subscription != nil, provisional: false)
         }
         let usage = Double(total - idle) / Double(total) * 100.0
-        return GPUSnapshot(usage: min(max(usage, 0), 100), available: true, provisional: true)
+        return GPUSnapshot(usage: min(max(usage, 0), 100), available: true, provisional: false)
     }
 }

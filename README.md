@@ -135,7 +135,7 @@ Apple Silicon exposes its telemetry through a private framework called IOReport,
 
 ### A note on GPU percent
 
-GPU utilization is marked **provisional** in the UI, and that is deliberate. It comes from the GPU's performance-state residency, and every tool of record treats state 0 as idle. That holds on M1 through M4. On the M5, that state stays near zero while the display is on and the GPU parks in its lowest active state instead, so the usual formula reads a flat 100%. The interim reading treats both states as idle and flags itself until it is calibrated against one `powermetrics` run. GPU **power** in watts is exact today, and it is the GPU signal to trust in the meantime.
+GPU utilization is **calibrated against `powermetrics`** on the M5. It comes from the GPU's performance-state residency, where state 0 (`OFF`) is the idle share and the active frequencies (338 to 1620 MHz) are the rest, so `usage = 1 - OFF/total`. That matches how `powermetrics` reports its own "GPU active residency": under a sustained Metal load both read 100%, and at idle both read the small share the compositor keeps the GPU awake for. GPU **power** in watts is exact too.
 
 ## How it compares
 
@@ -161,7 +161,7 @@ If you want the most features today, `stats` is excellent. Mac Vitals is for peo
 - [x] MCP server
 - [x] Full window with history from 1 minute to 1 year (plus YTD), persisted across restarts
 - [x] Network, disk, and battery
-- [ ] Calibrate GPU percent against `powermetrics` on M-series
+- [x] Calibrate GPU percent against `powermetrics` (M5)
 - [ ] **Task traces**: bracket a build or a run and get back what it cost (CPU, GPU, watt-hours), in the app and over MCP
 - [ ] Per-process attribution (what is using the machine)
 - [ ] Sensors: temperature and fan
