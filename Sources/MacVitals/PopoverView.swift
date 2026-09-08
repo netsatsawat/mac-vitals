@@ -8,6 +8,7 @@ struct PopoverView: View {
     var onToggleWidget: () -> Void
     var onQuit: () -> Void
     @Environment(\.openWindow) private var openWindow
+    @AppStorage("menuBarFull") private var menuBarFull: Bool = true
 
     private func openMainWindow() {
         NSApp.setActivationPolicy(.regular) // show the Dock icon while the window is open
@@ -90,6 +91,11 @@ struct PopoverView: View {
             footerButton("square.grid.2x2", "Widget", onToggleWidget)
             footerButton("macwindow", "Open", openMainWindow)
             Menu {
+                Toggle("Full menu-bar readout", isOn: $menuBarFull)
+                    .keyboardShortcut("m", modifiers: [.command, .shift])
+                Text(menuBarFull ? "Showing CPU, GPU, memory, network"
+                                 : "Showing CPU and GPU")
+                Divider()
                 Button("Quit Mac Vitals", action: onQuit)
             } label: {
                 Image(systemName: "ellipsis")

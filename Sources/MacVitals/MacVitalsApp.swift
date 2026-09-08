@@ -1,4 +1,5 @@
 import SwiftUI
+import VitalsCore
 
 @main
 struct MacVitalsApp: App {
@@ -78,29 +79,29 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool { false }
 }
 
-/// The always-visible menu-bar readout: CPU, GPU, memory, and network in/out.
+/// The always-visible menu-bar readout. Built as a single `Text` with inline SF
+/// Symbols, because `MenuBarExtra` renders a multi-view label unreliably (often
+/// only the first element). Compact shows CPU and GPU; full adds memory and
+/// network in/out, toggled from the popover and remembered.
 struct MenuBarLabel: View {
     @ObservedObject var store: SampleStore
+    @AppStorage("menuBarFull") private var full: Bool = true
+
     var body: some View {
-        let s = store.latest
-        HStack(spacing: 7) {
-            item(Sym.cpu, "\(Int(s.cpu.usage.rounded()))%")
-            item(Sym.gpu, "\(Int(s.gpu.usage.rounded()))%")
-            item(Sym.mem, "\(Int(s.memory.usedPercent.rounded()))%")
-            HStack(spacing: 2) {
-                Image(systemName: "arrow.down").imageScale(.small)
-                Text(Fmt.rateCompact(s.network.downloadBytesPerSec))
-                Image(systemName: "arrow.up").imageScale(.small)
-                Text(Fmt.rateCompact(s.network.uploadBytesPerSec))
-            }
-        }
-        .monospacedDigit()
+        readout(store.latest).monospacedDigit()
     }
 
-    private func item(_ symbol: String, _ value: String) -> some View {
-        HStack(spacing: 3) {
-            Image(systemName: symbol).imageScale(.small)
-            Text(value)
+    private func readout(_ s: Snapshot) -> Text {
+        let cpu = Int(s.cpu.usage.rounded())
+        let gpu = Int(s.gpu.usage.rounded())
+        var t = Text("\(Image(systemName: Sym.cpu)) \(cpu)%")
+            + Text("  \(Image(systemName: Sym.gpu)) \(gpu)%")
+        if full {
+            let mem = Int(s.memory.usedPercent.rounded())
+            t = t + Text("  \(Image(systemName: Sym.mem)) \(mem)%")
+                + Text("  \(Image(systemName: "arrow.down"))\(Fmt.rateCompact(s.network.downloadBytesPerSec))")
+                + Text(" \(Image(systemName: "arrow.up"))\(Fmt.rateCompact(s.network.uploadBytesPerSec))")
         }
+        return t
     }
 }
