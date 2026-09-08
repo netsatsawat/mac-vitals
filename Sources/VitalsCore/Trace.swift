@@ -17,6 +17,10 @@ public struct TraceResult: Codable, Sendable {
     public var diskReadBytes: Double
     public var diskWriteBytes: Double
     public var socTempPeakC: Double
+    /// Whether the machine thermally throttled at any point during the window.
+    public var throttled: Bool
+    /// The most swap in use at any point during the window, in bytes.
+    public var peakSwapBytes: Double
 }
 
 /// Accumulates snapshots into a `TraceResult`. Feed it each 1 Hz sample between
@@ -31,6 +35,8 @@ public struct Trace {
     private var netDown = 0.0, netUp = 0.0
     private var diskRead = 0.0, diskWrite = 0.0
     private var tempPeak = 0.0
+    private var didThrottle = false
+    private var swapPeak = 0.0
 
     public init(start: Date = Date()) {
         self.start = start
@@ -55,6 +61,8 @@ public struct Trace {
         diskRead += s.diskRead * dt
         diskWrite += s.diskWrite * dt
         tempPeak = max(tempPeak, s.temp ?? 0)
+        if s.throttled == true { didThrottle = true }
+        swapPeak = max(swapPeak, s.swap ?? 0)
     }
 
     public func result() -> TraceResult {
@@ -73,7 +81,9 @@ public struct Trace {
             networkUpBytes: netUp,
             diskReadBytes: diskRead,
             diskWriteBytes: diskWrite,
-            socTempPeakC: tempPeak
+            socTempPeakC: tempPeak,
+            throttled: didThrottle,
+            peakSwapBytes: swapPeak
         )
     }
 }

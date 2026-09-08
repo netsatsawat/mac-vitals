@@ -65,9 +65,17 @@ Per-second history for up to the last 60 seconds. Optional `seconds` argument (1
   "samples": [ { "t": "...", "cpu": 40.2, "gpu": 71.0, "memory": 59.0, "watts": 21.1 }, ... ] }
 ```
 
+### `get_top_processes`
+
+What is using the machine right now. Optional `limit` (1 to 30, default 8) and `sortBy` (`cpu` or `memory`). Returns a list of `{ pid, name, cpuPercent, memoryBytes }`. Handy for "is Ollama the thing eating my memory?" Per-process GPU is not available to a normal user, so it is not included.
+
+```json
+[ { "pid": 4821, "name": "ollama", "cpuPercent": 312.0, "memoryBytes": 9200000000 }, ... ]
+```
+
 ### `start_trace` and `stop_trace`
 
-Bracket a task and get its cost. Call `start_trace`, run the work, then `stop_trace`. Only one trace runs at a time.
+Bracket a task and get its cost. Call `start_trace`, run the work, then `stop_trace`. Only one trace runs at a time. The result includes whether the run thermally throttled and its peak swap, which explain a run that slowed down.
 
 `stop_trace` returns:
 

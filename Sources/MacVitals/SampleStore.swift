@@ -18,8 +18,14 @@ final class SampleStore: ObservableObject {
     @Published private(set) var history: [Sample] = []   // per-second, last hour
     @Published private(set) var minutes: [Sample] = []   // minute averages
     @Published private(set) var hours: [Sample] = []     // hour averages
+    /// Top-process list, refreshed only while a view asks for it (the full window),
+    /// so scanning every pid never runs when nothing shows it.
+    @Published private(set) var processes: [ProcessUsage] = []
 
     private let monitor = Monitor()
+    private let processReader = ProcessReader()
+    private var wantsProcesses = false
+    private var procTick = 0
     private let secondsStore: TierStore?
     private let minutesStore: TierStore?
     private let hoursStore: TierStore?
@@ -50,13 +56,14 @@ final class SampleStore: ObservableObject {
     }
 
     /// Seeded store with no live timer or persistence, for offscreen rendering.
-    init(seed: [Snapshot], minutes: [Sample] = [], hours: [Sample] = []) {
+    init(seed: [Snapshot], minutes: [Sample] = [], hours: [Sample] = [], processes: [ProcessUsage] = []) {
         secondsStore = nil
         minutesStore = nil
         hoursStore = nil
         history = seed.map(Sample.init(from:))
         self.minutes = minutes
         self.hours = hours
+        self.processes = processes
         latest = seed.last ?? .placeholder
     }
 
@@ -72,6 +79,11 @@ final class SampleStore: ObservableObject {
 
     func stop() { timer?.invalidate(); timer = nil }
 
+    /// The full window calls these on appear/disappear so the per-pid scan only
+    /// runs when a view actually shows the list.
+    func startProcesses() { wantsProcesses = true; procTick = 0; _ = processReader.read() } // prime the CPU baseline
+    func stopProcesses() { wantsProcesses = false; processes = [] }
+
     private func tick() {
         let snap = monitor.sample()
         latest = snap
@@ -83,6 +95,12 @@ final class SampleStore: ObservableObject {
             history.removeAll { $0.t < cutoff }
         }
         secondsStore?.append(s)
+
+        // Refresh the top-process list every two seconds while the window wants it.
+        if wantsProcesses {
+            procTick += 1
+            if procTick % 2 == 0 { processes = processReader.read() }
+        }
 
         rollUp()
     }

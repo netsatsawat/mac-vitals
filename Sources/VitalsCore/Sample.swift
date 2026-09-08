@@ -21,14 +21,20 @@ public struct Sample: Codable, Sendable {
     // Optional so files written before these fields existed still decode.
     public var temp: Double?
     public var fan: Double?
+    /// Whether the machine was thermally throttling at this instant, and swap in
+    /// use (bytes). Carried so a trace can report if a run throttled or swapped.
+    public var throttled: Bool?
+    public var swap: Double?
 
     public init(t: Date, cpu: Double, gpu: Double, mem: Double, watts: Double,
                 netDown: Double, netUp: Double, diskRead: Double, diskWrite: Double,
-                temp: Double? = nil, fan: Double? = nil) {
+                temp: Double? = nil, fan: Double? = nil,
+                throttled: Bool? = nil, swap: Double? = nil) {
         self.t = t; self.cpu = cpu; self.gpu = gpu; self.mem = mem; self.watts = watts
         self.netDown = netDown; self.netUp = netUp
         self.diskRead = diskRead; self.diskWrite = diskWrite
         self.temp = temp; self.fan = fan
+        self.throttled = throttled; self.swap = swap
     }
 
     /// Project a live snapshot down to the scalars history keeps.
@@ -38,7 +44,9 @@ public struct Sample: Codable, Sendable {
                   watts: s.power.totalWatts,
                   netDown: s.network.downloadBytesPerSec, netUp: s.network.uploadBytesPerSec,
                   diskRead: s.disk.readBytesPerSec, diskWrite: s.disk.writeBytesPerSec,
-                  temp: s.thermal.socTempC, fan: Double(s.thermal.fanRPM))
+                  temp: s.thermal.socTempC, fan: Double(s.thermal.fanRPM),
+                  throttled: s.thermal.pressure == "serious" || s.thermal.pressure == "critical",
+                  swap: Double(s.memory.swapUsedBytes))
     }
 
     /// Average a set of finer samples into one coarser point, stamped at `time`
@@ -50,6 +58,8 @@ public struct Sample: Codable, Sendable {
                   cpu: avg(\.cpu), gpu: avg(\.gpu), mem: avg(\.mem), watts: avg(\.watts),
                   netDown: avg(\.netDown), netUp: avg(\.netUp),
                   diskRead: avg(\.diskRead), diskWrite: avg(\.diskWrite),
-                  temp: avg { $0.temp ?? 0 }, fan: avg { $0.fan ?? 0 })
+                  temp: avg { $0.temp ?? 0 }, fan: avg { $0.fan ?? 0 },
+                  throttled: samples.contains { $0.throttled == true },
+                  swap: avg { $0.swap ?? 0 })
     }
 }

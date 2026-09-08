@@ -6,12 +6,18 @@ All notable changes to this project are recorded here. The format follows
 
 ## [Unreleased]
 
-## [1.1.0] - 2026-09-09
+## [0.2.0] - 2026-09-09
 
-Metrics for people running local models, plus the always-on and distribution
-work. Everything still reads as a normal user, with no `sudo`.
+Metrics for people running local models, a diagnostic view of what is using the
+machine, plus the always-on and distribution work. Everything still reads as a
+normal user, with no `sudo`.
 
 ### Added
+- **Top processes**: what is using the machine right now, sorted by CPU or
+  memory, read as a normal user through `libproc`. Shows in the full window as a
+  panel, on the command line (`vitals --top`, `--top --mem`), and as a
+  `get_top_processes` MCP tool. Per-process GPU is not available to a normal
+  user, so it is deliberately left out rather than guessed.
 - **Neural Engine (ANE) power**, from the Energy Model. Near zero for GPU-based
   LLMs, which itself confirms a run is on the GPU and not the ANE.
 - **Memory-fit signals**: the OS memory-pressure level, swap in use, and how
@@ -33,6 +39,9 @@ work. Everything still reads as a normal user, with no `sudo`.
   discovering private channels across chip generations.
 
 ### Changed
+- Task traces now also report whether the run **thermally throttled** and its
+  **peak swap**, so a run that slowed down explains itself. In the app, the CLI,
+  and over MCP.
 - The popover's status pill now reflects the real memory and thermal pressure
   ("Normal", "Elevated", "Throttling", "Critical") instead of a fixed label.
 

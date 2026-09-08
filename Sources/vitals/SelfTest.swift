@@ -39,6 +39,10 @@ func runSelfTest() -> Int32 {
         check(s.thermal.fanRPM >= 0 && s.thermal.fanRPM < 12000, "fan RPM implausible: \(s.thermal.fanRPM)")
     }
 
+    let procs = ProcessReader().topOnce(limit: 5)
+    check(!procs.isEmpty, "top processes returned nothing")
+    check(procs.allSatisfy { $0.cpuPercent >= 0 && $0.pid > 0 }, "a process value is out of range")
+
     if failures.isEmpty {
         print("selftest PASS: cpu \(Int(s.cpu.usage))%, gpu \(s.gpu.available ? "\(Int(s.gpu.usage))%" : "n/a"), "
               + "mem \(Int(s.memory.usedPercent))%, power \(s.power.available ? String(format: "%.1fW", s.power.totalWatts) : "n/a")")

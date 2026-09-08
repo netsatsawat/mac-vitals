@@ -29,6 +29,22 @@ if args.contains("--dump-ioreport") {
     exit(0)
 }
 
+// Top processes: what is using the machine right now.
+if args.contains("--top") {
+    let byMem = args.contains("--mem")
+    let procs = ProcessReader().topOnce(limit: 12, byMemory: byMem)
+    if asJSON {
+        let e = JSONEncoder(); e.outputFormatting = [.prettyPrinted, .sortedKeys]
+        if let d = try? e.encode(procs), let s = String(data: d, encoding: .utf8) { print(s) }
+    } else {
+        print("   PID   CPU%        MEM  NAME")
+        for p in procs {
+            print(String(format: "%6d  %5.1f%%  %7.0f MB  %@", p.pid, p.cpuPercent, Double(p.memoryBytes) / 1_048_576, p.name))
+        }
+    }
+    exit(0)
+}
+
 // Trace: measure what a fixed window costs the machine.
 if let ti = CommandLine.arguments.firstIndex(of: "--trace") {
     let seconds = (ti + 1 < CommandLine.arguments.count ? Double(CommandLine.arguments[ti + 1]) : nil) ?? 10
@@ -94,6 +110,8 @@ func runTrace(seconds: Double, json: Bool) {
     print("  Net    ↓ \(bytesHuman(r.networkDownBytes))   ↑ \(bytesHuman(r.networkUpBytes))")
     print("  Disk   R \(bytesHuman(r.diskReadBytes))   W \(bytesHuman(r.diskWriteBytes))")
     if r.socTempPeakC > 0 { print(String(format: "  Temp   peak %.0f°C", r.socTempPeakC)) }
+    if r.throttled { print("  Thermal  throttled during this run") }
+    if r.peakSwapBytes > 0 { print("  Swap   peak \(bytesHuman(r.peakSwapBytes))") }
 }
 
 func printHuman(_ s: Snapshot) {

@@ -35,7 +35,8 @@ It shows up three ways, over one engine:
 - **Memory** used against total the way Activity Monitor counts it, plus the memory-pressure level, swap in use, and how much of it the GPU may use, which is the practical limit for fitting a local model.
 - **Power** in watts, per rail: CPU, GPU, and the Neural Engine, read from the chip's energy counters.
 - **Network, disk, and battery** too: up and down throughput, read and write activity with free space, and charge.
-- **Temperature, fan, and throttling** from the SMC and the OS thermal state, so you can see when a long run is being thermally limited, plus **task traces** that measure what a build or run cost (CPU, GPU, watt-hours, bytes moved) in the app, the CLI, and over MCP.
+- **Temperature, fan, and throttling** from the SMC and the OS thermal state, so you can see when a long run is being thermally limited, plus **task traces** that measure what a build or run cost (CPU, GPU, watt-hours, bytes moved, whether it throttled) in the app, the CLI, and over MCP.
+- **What is using the machine**: the top processes by CPU or memory, so you can tell whether the model server is the one eating your RAM. In the full window, the CLI, and over MCP. (Per-process GPU is not exposed to a normal user, so it is left out.)
 - **A full window** with every metric charted from the last minute to a full year, plus year-to-date, with all three resolutions persisted so every range picks up where it left off and the long ranges fill in over time.
 - **No password, ever.** Everything comes through Apple's IOReport interface as a normal user.
 - **Zero dependencies.** One Swift package, no runtime, no helper daemon, no kernel extension.
@@ -84,6 +85,7 @@ swift build -c release --product vitals
 .build/release/vitals --json     # one reading as JSON
 .build/release/vitals --watch    # stream once a second
 .build/release/vitals --trace 30 # measure the next 30s and print the cost
+.build/release/vitals --top      # top processes by CPU (add --mem for memory)
 .build/release/vitals --selftest # bounded-value check, exits 0 or 1
 ```
 
@@ -116,6 +118,7 @@ Two tools are exposed:
 | --- | --- |
 | `get_vitals` | One live reading: CPU (overall plus E and P clusters), GPU, memory (with pressure, swap, and the GPU memory ceiling), power per rail including the Neural Engine, network, disk, battery, and temperature with a throttling state. |
 | `get_vitals_history` | Per-second history for up to the last 60 seconds of CPU%, GPU%, memory%, and watts. |
+| `get_top_processes` | The processes using the machine the most right now, by CPU or memory. Answers "what is using my Mac", including whether the local model server is the culprit. |
 | `start_trace` / `stop_trace` | Bracket a task. `stop_trace` returns what it cost: CPU and GPU average and peak, average watts and energy in watt-hours, network and disk totals, and peak temperature. |
 
 They are read-only. The agent can see the machine and never change it. An agent can wrap its own build in `start_trace` … `stop_trace` and get the energy and resource cost back. Full setup and examples are in [docs/MCP.md](docs/MCP.md).

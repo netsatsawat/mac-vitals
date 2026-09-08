@@ -46,6 +46,7 @@ struct MainView: View {
     @State private var traceStart: Date?
     @State private var traceResult: TraceResult?
     @State private var showTrace = false
+    @State private var procSortByMem = false
     var scrolls: Bool
 
     private let readTeal = Palette.teal
@@ -69,6 +70,8 @@ struct MainView: View {
         }
         .frame(minWidth: 760, minHeight: 520)
         .background(Color(nsColor: .windowBackgroundColor))
+        .onAppear { store.startProcesses() }
+        .onDisappear { store.stopProcesses() }
     }
 
     private var grid: some View {
@@ -79,7 +82,71 @@ struct MainView: View {
             if store.latest.thermal.available {
                 HStack(spacing: 14) { temperatureChart; fanChart }
             }
+            if !store.processes.isEmpty { processPanel }
         }
+    }
+
+    // MARK: - Top processes
+
+    private var sortedProcesses: [ProcessUsage] {
+        ProcessReader.top(store.processes, limit: 8, byMemory: procSortByMem)
+    }
+
+    private var processPanel: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            HStack(spacing: 10) {
+                Image(systemName: "list.bullet").font(.system(size: 11, weight: .semibold)).foregroundStyle(Palette.ink2)
+                Text("Top processes").font(.system(size: 13, weight: .semibold)).foregroundStyle(Palette.ink)
+                Spacer()
+                sortToggle
+            }
+            .padding(.bottom, 10)
+            HStack(spacing: 10) {
+                Text("PROCESS").frame(maxWidth: .infinity, alignment: .leading)
+                Text("CPU").frame(width: 62, alignment: .trailing)
+                Text("MEMORY").frame(width: 80, alignment: .trailing)
+            }
+            .font(.system(size: 9.5, weight: .semibold)).foregroundStyle(Palette.ink3)
+            .padding(.bottom, 6)
+            ForEach(sortedProcesses, id: \.pid) { p in processRow(p) }
+        }
+        .padding(16)
+        .background(RoundedRectangle(cornerRadius: 12, style: .continuous).fill(Color(nsColor: .controlBackgroundColor)))
+        .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(Palette.hair, lineWidth: 0.5))
+    }
+
+    private var sortToggle: some View {
+        HStack(spacing: 2) {
+            toggleChip("CPU", !procSortByMem) { procSortByMem = false }
+            toggleChip("Memory", procSortByMem) { procSortByMem = true }
+        }
+        .padding(2)
+        .background(RoundedRectangle(cornerRadius: 7, style: .continuous).fill(Palette.track))
+    }
+
+    private func toggleChip(_ label: String, _ on: Bool, _ action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Text(label).font(.system(size: 10.5, weight: .semibold))
+                .foregroundStyle(on ? Palette.ink : Palette.ink3)
+                .padding(.vertical, 3).padding(.horizontal, 9)
+                .background(RoundedRectangle(cornerRadius: 5, style: .continuous)
+                    .fill(on ? Palette.blue.opacity(0.22) : Color.clear))
+        }
+        .buttonStyle(.plain)
+    }
+
+    private func processRow(_ p: ProcessUsage) -> some View {
+        HStack(spacing: 10) {
+            Text(p.name).font(.system(size: 12)).foregroundStyle(Palette.ink)
+                .lineLimit(1).truncationMode(.middle)
+                .frame(maxWidth: .infinity, alignment: .leading)
+            Text(String(format: "%.0f%%", p.cpuPercent)).font(.vitalsNumber(12))
+                .foregroundStyle(Palette.load(min(p.cpuPercent, 100))).frame(width: 62, alignment: .trailing)
+            Text("\(Int((Double(p.memoryBytes) / 1_048_576).rounded())) MB").font(.vitalsNumber(12))
+                .foregroundStyle(Palette.ink2).frame(width: 80, alignment: .trailing)
+        }
+        .padding(.vertical, 5)
+        .overlay(alignment: .bottom) { Rectangle().fill(Palette.hair).frame(height: 0.5) }
     }
 
     // MARK: - Toolbar
@@ -135,6 +202,8 @@ struct MainView: View {
                 traceRow("Network", "↓ \(Fmt.bytes(r.networkDownBytes))   ↑ \(Fmt.bytes(r.networkUpBytes))")
                 traceRow("Disk", "R \(Fmt.bytes(r.diskReadBytes))   W \(Fmt.bytes(r.diskWriteBytes))")
                 if r.socTempPeakC > 0 { traceRow("Temp", String(format: "peak %.0f°C", r.socTempPeakC)) }
+                if r.throttled { traceRow("Throttled", "yes, during this run") }
+                if r.peakSwapBytes > 0 { traceRow("Swap", "peak \(Fmt.gb(UInt64(r.peakSwapBytes))) GB") }
             }
             .padding(14).frame(width: 264)
         }

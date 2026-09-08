@@ -8,7 +8,8 @@ enum RenderTool {
     static func renderMainWindow(to path: String, range: HistoryRange = .h24) {
         let store = SampleStore(seed: synthetic(),
                                 minutes: syntheticSamples(1440, step: 60),
-                                hours: syntheticSamples(370 * 24, step: 3600))
+                                hours: syntheticSamples(370 * 24, step: 3600),
+                                processes: syntheticProcesses())
         let view = MainView(store: store, scrolls: false, initialRange: range).frame(width: 840, height: 940)
         let renderer = ImageRenderer(content: view)
         renderer.scale = 2
@@ -48,6 +49,19 @@ enum RenderTool {
                 fan: max(0, 1600 + 900 * sin(f / 70))
             )
         }
+    }
+
+    static func syntheticProcesses() -> [ProcessUsage] {
+        [
+            ProcessUsage(pid: 4821, name: "ollama", cpuPercent: 312, memoryBytes: 9_200_000_000),
+            ProcessUsage(pid: 731, name: "WindowServer", cpuPercent: 47, memoryBytes: 640_000_000),
+            ProcessUsage(pid: 5012, name: "Google Chrome Helper (GPU)", cpuPercent: 22, memoryBytes: 1_100_000_000),
+            ProcessUsage(pid: 902, name: "Xcode", cpuPercent: 14, memoryBytes: 2_300_000_000),
+            ProcessUsage(pid: 233, name: "kernel_task", cpuPercent: 9, memoryBytes: 280_000_000),
+            ProcessUsage(pid: 6120, name: "Claude", cpuPercent: 6, memoryBytes: 540_000_000),
+            ProcessUsage(pid: 388, name: "mds_stores", cpuPercent: 3, memoryBytes: 190_000_000),
+            ProcessUsage(pid: 27172, name: "MacVitals", cpuPercent: 1, memoryBytes: 46_000_000),
+        ]
     }
 
     static func renderPopover(to path: String) {

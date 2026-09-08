@@ -67,6 +67,8 @@ Pick the range from the control in the top right. Short ranges read per-second d
 
 History is kept at three resolutions, each written to its own file: per-second detail for the last hour, one-minute averages for about a week, and one-hour averages for over a year. All told a few MB. Every range survives a quit, and the long ones fill from what is already on disk rather than starting over. The design and the reasons behind it are in [history-persistence.md](history-persistence.md).
 
+At the bottom of the window is a **Top processes** panel: what is using the machine right now, sortable by CPU or memory. It is the fastest way to see whether the model server is the one eating your RAM. It reads through the same interface `top` uses, as a normal user. The scan only runs while the window is open, so it never adds load in the background. Per-process GPU is not available without more privileges than a normal user has, so it is left out rather than guessed.
+
 ## Measuring what a task costs
 
 The full window's toolbar has a **Trace** button. Press it, run your build or your training job, and press **Stop**. You get back what the work cost: CPU and GPU average and peak, average watts and energy in watt-hours, the bytes moved over network and disk, and the peak temperature. The same measurement is on the command line and over MCP, so an agent can wrap its own build and read the cost back.

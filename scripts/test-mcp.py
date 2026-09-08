@@ -34,6 +34,8 @@ def main():
         time.sleep(1.6)  # let the sampler take a real reading
         send({"jsonrpc": "2.0", "id": 3, "method": "tools/call",
               "params": {"name": "get_vitals", "arguments": {}}})
+        send({"jsonrpc": "2.0", "id": 6, "method": "tools/call",
+              "params": {"name": "get_top_processes", "arguments": {"limit": 5}}})
         send({"jsonrpc": "2.0", "id": 4, "method": "tools/call",
               "params": {"name": "start_trace", "arguments": {}}})
         time.sleep(3)
@@ -63,7 +65,7 @@ def main():
 
     # tools/list
     tools = {t["name"] for t in responses.get(2, {}).get("result", {}).get("tools", [])}
-    for name in ("get_vitals", "get_vitals_history", "start_trace", "stop_trace"):
+    for name in ("get_vitals", "get_vitals_history", "get_top_processes", "start_trace", "stop_trace"):
         check(name in tools, "missing tool: " + name)
 
     # get_vitals content
@@ -83,6 +85,16 @@ def main():
                 "networkDownBytes", "diskWriteBytes"):
         check(key in trace, "stop_trace missing key: " + key)
     check(trace["durationSeconds"] > 0, "trace duration not positive")
+    for key in ("throttled", "peakSwapBytes"):
+        check(key in trace, "stop_trace missing key: " + key)
+
+    # get_top_processes content
+    tp = responses.get(6, {}).get("result", {}).get("content", [{}])[0].get("text", "[]")
+    procs = json.loads(tp)
+    check(isinstance(procs, list) and len(procs) > 0, "get_top_processes returned no processes")
+    if procs:
+        for key in ("pid", "name", "cpuPercent", "memoryBytes"):
+            check(key in procs[0], "process missing key: " + key)
 
     proc.wait(timeout=5)
 
