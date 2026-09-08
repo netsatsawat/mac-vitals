@@ -288,7 +288,10 @@ struct MainView: View {
             title: "Memory", symbol: "memorychip", accent: Palette.blue,
             lines: [ChartLine(label: "Memory", color: Palette.blue, points: series(.memory))],
             span: range.seconds, yMax: 100, yFormat: { "\(Int($0))%" },
-            currentText: "\(Int(m.usedPercent))%", note: "\(Fmt.gb(m.usedBytes)) / \(Fmt.gb(m.totalBytes)) GB")
+            currentText: "\(Int(m.usedPercent))%",
+            note: "\(Fmt.gb(m.usedBytes)) / \(Fmt.gb(m.totalBytes)) GB"
+                + (m.pressure != "normal" ? " · \(m.pressure)" : "")
+                + (m.swapUsedBytes > 1_073_741_824 ? " · swap \(Fmt.gb(m.swapUsedBytes))" : ""))
     }
 
     private var powerChart: some View {
@@ -300,7 +303,7 @@ struct MainView: View {
             lines: [ChartLine(label: "Power", color: Palette.amber, points: pts)],
             span: range.seconds, yMax: yMax, yFormat: { String(format: "%.0f W", $0) },
             currentText: String(format: "%.1f W", p.totalWatts),
-            note: String(format: "CPU %.1f · GPU %.1f", p.cpuWatts, p.gpuWatts))
+            note: String(format: "CPU %.1f · GPU %.1f · ANE %.1f", p.cpuWatts, p.gpuWatts, p.aneWatts))
     }
 
     private var networkChart: some View {

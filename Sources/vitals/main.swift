@@ -22,6 +22,13 @@ if args.contains("--selftest") {
     exit(runSelfTest())
 }
 
+// Diagnostic: list every IOReport channel on this machine (for discovering
+// ANE, memory-bandwidth, and other private channels before wiring a reader).
+if args.contains("--dump-ioreport") {
+    for line in IOReportInspector.dump() { print(line) }
+    exit(0)
+}
+
 // Trace: measure what a fixed window costs the machine.
 if let ti = CommandLine.arguments.firstIndex(of: "--trace") {
     let seconds = (ti + 1 < CommandLine.arguments.count ? Double(CommandLine.arguments[ti + 1]) : nil) ?? 10
@@ -97,9 +104,12 @@ func printHuman(_ s: Snapshot) {
     } else {
         print("GPU     n/a")
     }
-    print("MEM  \(gb(mem.usedBytes)) / \(gb(mem.totalBytes))  (\(String(format: "%.0f%%", mem.usedPercent)))")
+    var memLine = "MEM  \(gb(mem.usedBytes)) / \(gb(mem.totalBytes))  (\(String(format: "%.0f%%", mem.usedPercent)))   pressure \(mem.pressure)"
+    if mem.swapUsedBytes > 0 { memLine += "   swap \(gb(mem.swapUsedBytes))" }
+    print(memLine)
+    if mem.gpuLimitBytes > 0 { print("     GPU can use up to \(gb(mem.gpuLimitBytes))") }
     if pw.available {
-        print(String(format: "PWR  %.2f W   (CPU %.2f  GPU %.2f)", pw.totalWatts, pw.cpuWatts, pw.gpuWatts))
+        print(String(format: "PWR  %.2f W   (CPU %.2f  GPU %.2f  ANE %.2f)", pw.totalWatts, pw.cpuWatts, pw.gpuWatts, pw.aneWatts))
     } else {
         print("PWR     n/a")
     }
@@ -113,7 +123,10 @@ func printHuman(_ s: Snapshot) {
     let th = s.thermal
     if th.available {
         let fan = th.fanPresent ? "   fan \(th.fanRPM) rpm" : ""
-        print(String(format: "TMP  %.1f°C%@", th.socTempC, fan))
+        let throttle = th.pressure != "nominal" ? "   [\(th.pressure), throttling]" : ""
+        print(String(format: "TMP  %.1f°C%@%@", th.socTempC, fan, throttle))
+    } else if th.pressure != "nominal" {
+        print("TMP  thermal pressure \(th.pressure) (throttling)")
     }
 }
 

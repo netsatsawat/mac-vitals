@@ -99,7 +99,7 @@ final class MCPServer {
         [
             [
                 "name": "get_vitals",
-                "description": "One live reading of this Mac: CPU (overall, the efficiency and performance clusters, and per-core), GPU, memory (used/total and pressure), per-rail power in watts, network up/down bytes per second, disk read/write and free space, battery, and SoC temperature and fan RPM. Read-only.",
+                "description": "One live reading of this Mac: CPU (overall, the efficiency and performance clusters, and per-core), GPU, memory (used/total, memory-pressure level, swap in use, and how much memory the GPU may use, which is the practical limit for fitting a local model), per-rail power in watts including the Neural Engine (ANE), network up/down bytes per second, disk read/write and free space, battery, and SoC temperature, fan RPM, and thermal-pressure state (serious or critical means the machine is throttling). Read-only.",
                 "inputSchema": ["type": "object", "properties": [String: Any](), "additionalProperties": false],
             ],
             [

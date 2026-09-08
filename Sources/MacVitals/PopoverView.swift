@@ -38,12 +38,12 @@ struct PopoverView: View {
             divider
             MetricRow(name: "Memory", symbol: Sym.mem, tint: Palette.blue,
                       value: "\(Int(s.memory.usedPercent.rounded()))", unit: "%", bar: s.memory.usedPercent,
-                      sub: "\(gbString(s.memory.usedBytes)) / \(gbString(s.memory.totalBytes)) GB",
+                      sub: memorySub(s.memory),
                       history: store.memHistory)
             divider
             MetricRow(name: "Power", symbol: Sym.power, tint: Palette.amber,
                       value: String(format: "%.1f", s.power.totalWatts), unit: "W", bar: nil,
-                      sub: String(format: "CPU %.1f · GPU %.1f", s.power.cpuWatts, s.power.gpuWatts),
+                      sub: String(format: "CPU %.1f · GPU %.1f · ANE %.1f", s.power.cpuWatts, s.power.gpuWatts, s.power.aneWatts),
                       history: nil)
             divider
             MetricRow(name: "Network", symbol: "network", tint: Palette.blue,
@@ -64,9 +64,10 @@ struct PopoverView: View {
             if s.thermal.available {
                 divider
                 MetricRow(name: "Temperature", symbol: "thermometer.medium",
-                          tint: Palette.load(s.thermal.socTempC),
+                          tint: throttling(s.thermal) ? Palette.load(92) : Palette.load(s.thermal.socTempC),
                           value: String(format: "%.0f", s.thermal.socTempC), unit: "°C", bar: nil,
-                          sub: s.thermal.fanPresent ? "fan \(s.thermal.fanRPM) rpm" : "SoC die average",
+                          sub: throttling(s.thermal) ? "throttling · \(s.thermal.pressure)"
+                                                     : (s.thermal.fanPresent ? "fan \(s.thermal.fanRPM) rpm" : "SoC die average"),
                           history: nil)
             }
 
@@ -79,6 +80,28 @@ struct PopoverView: View {
 
     private var divider: some View {
         Rectangle().fill(Palette.hair).frame(height: 0.5)
+    }
+
+    /// Memory sub-line: used against total, the OS pressure level, and swap when in use.
+    private func memorySub(_ m: MemorySnapshot) -> String {
+        var s = "\(gbString(m.usedBytes)) / \(gbString(m.totalBytes)) GB"
+        if m.pressure != "normal" { s += " · \(m.pressure)" }
+        if m.swapUsedBytes > 1_073_741_824 { s += " · swap \(gbString(m.swapUsedBytes))" } // only once it is real
+        return s
+    }
+
+    /// Whether the machine is thermally throttling right now.
+    private func throttling(_ t: ThermalSnapshot) -> Bool {
+        t.pressure == "serious" || t.pressure == "critical"
+    }
+
+    /// The one-word system state for the footer pill, and its colour.
+    private func pressureState(_ s: Snapshot) -> (String, Color) {
+        let t = s.thermal.pressure, m = s.memory.pressure
+        if t == "critical" || m == "critical" { return ("Critical", Palette.load(95)) }
+        if t == "serious" { return ("Throttling", Palette.load(88)) }
+        if t == "fair" || m == "warning" { return ("Elevated", Palette.load(72)) }
+        return ("Normal", Palette.good)
     }
 
     /// One-time, dismissible first-run hint. Launch at Login is what lets the
@@ -130,10 +153,11 @@ struct PopoverView: View {
     }
 
     private var footer: some View {
-        HStack(spacing: 8) {
+        let state = pressureState(store.latest)
+        return HStack(spacing: 8) {
             HStack(spacing: 5) {
-                Circle().fill(Palette.good).frame(width: 7, height: 7)
-                Text("Normal").font(.system(size: 10.5, weight: .semibold)).foregroundStyle(Palette.ink2)
+                Circle().fill(state.1).frame(width: 7, height: 7)
+                Text(state.0).font(.system(size: 10.5, weight: .semibold)).foregroundStyle(Palette.ink2)
             }
             Spacer(minLength: 8)
             footerButton("square.grid.2x2", "Widget", onToggleWidget)

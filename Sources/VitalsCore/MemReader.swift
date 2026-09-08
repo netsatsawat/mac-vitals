@@ -1,14 +1,20 @@
 import Foundation
 import Darwin
+import Metal
 
 /// Memory usage from `host_statistics64` (VM stats) plus `hw.memsize` for the total.
 ///
 /// "Used" is built the way Activity Monitor presents it: app memory + wired +
 /// compressed, rather than "total minus free", which overstates pressure because
-/// macOS keeps inactive pages around on purpose.
+/// macOS keeps inactive pages around on purpose. Also reports swap, the OS
+/// memory-pressure level, and the GPU's memory ceiling, all of which speak to the
+/// "will this local model fit, and why did it slow down" question.
 final class MemReader {
     private let pageSize: UInt64
     private let total: UInt64
+    /// Metal's recommended working-set size: the practical cap on how much memory
+    /// the GPU may use. Constant for the machine, so read once.
+    private let gpuLimit: UInt64
 
     init() {
         pageSize = UInt64(vm_kernel_page_size)
@@ -16,6 +22,27 @@ final class MemReader {
         var size = MemoryLayout<UInt64>.size
         sysctlbyname("hw.memsize", &mem, &size, nil, 0)
         total = mem
+        gpuLimit = MTLCreateSystemDefaultDevice().map { UInt64($0.recommendedMaxWorkingSetSize) } ?? 0
+    }
+
+    /// Swap used and total, from `vm.swapusage`.
+    private func swap() -> (used: UInt64, total: UInt64) {
+        var usage = xsw_usage()
+        var size = MemoryLayout<xsw_usage>.size
+        guard sysctlbyname("vm.swapusage", &usage, &size, nil, 0) == 0 else { return (0, 0) }
+        return (usage.xsu_used, usage.xsu_total)
+    }
+
+    /// The OS memory-pressure level: 1 normal, 2 warning, 4 critical.
+    private func pressureLevel() -> String {
+        var level: Int32 = 0
+        var size = MemoryLayout<Int32>.size
+        guard sysctlbyname("kern.memorystatus_vm_pressure_level", &level, &size, nil, 0) == 0 else { return "normal" }
+        switch level {
+        case 4: return "critical"
+        case 2: return "warning"
+        default: return "normal"
+        }
     }
 
     func read() -> MemorySnapshot {
@@ -37,6 +64,7 @@ final class MemReader {
         let purgeable = UInt64(stats.purgeable_count)
         let app = internalPages > purgeable ? (internalPages - purgeable) * pageSize : 0
         let used = app + wired + compressed
+        let sw = swap()
 
         return MemorySnapshot(
             totalBytes: total,
@@ -44,7 +72,11 @@ final class MemReader {
             wiredBytes: wired,
             compressedBytes: compressed,
             appBytes: app,
-            usedPercent: total > 0 ? Double(used) / Double(total) * 100.0 : 0
+            usedPercent: total > 0 ? Double(used) / Double(total) * 100.0 : 0,
+            swapUsedBytes: sw.used,
+            swapTotalBytes: sw.total,
+            gpuLimitBytes: gpuLimit,
+            pressure: pressureLevel()
         )
     }
 }

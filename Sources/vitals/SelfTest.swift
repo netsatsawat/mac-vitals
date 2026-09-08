@@ -21,7 +21,12 @@ func runSelfTest() -> Int32 {
     if s.power.available {
         check(s.power.totalWatts >= 0, "total power is negative")
         check(s.power.totalWatts < 500, "total power implausibly high: \(s.power.totalWatts)")
+        check(s.power.aneWatts >= 0 && s.power.aneWatts < 100, "ANE power out of range: \(s.power.aneWatts)")
     }
+    check(["normal", "warning", "critical"].contains(s.memory.pressure), "memory pressure unexpected: \(s.memory.pressure)")
+    check(s.memory.swapUsedBytes <= s.memory.swapTotalBytes || s.memory.swapTotalBytes == 0, "swap used exceeds total")
+    check(s.memory.gpuLimitBytes <= s.memory.totalBytes, "GPU memory limit exceeds physical memory")
+    check(["nominal", "fair", "serious", "critical"].contains(s.thermal.pressure), "thermal pressure unexpected: \(s.thermal.pressure)")
     check(s.network.downloadBytesPerSec >= 0 && s.network.uploadBytesPerSec >= 0, "network rate negative")
     check(s.disk.readBytesPerSec >= 0 && s.disk.writeBytesPerSec >= 0, "disk rate negative")
     check(s.disk.freeBytes <= s.disk.totalBytes, "disk free exceeds total")

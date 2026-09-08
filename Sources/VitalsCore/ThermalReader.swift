@@ -39,9 +39,22 @@ final class ThermalReader {
         if tempKeys.count > 40 { tempKeys = Array(tempKeys.prefix(40)) }
     }
 
+    /// The OS thermal-pressure state, independent of the SMC. "serious" and up mean
+    /// the machine is throttling.
+    private func pressureString() -> String {
+        switch ProcessInfo.processInfo.thermalState {
+        case .nominal: return "nominal"
+        case .fair: return "fair"
+        case .serious: return "serious"
+        case .critical: return "critical"
+        @unknown default: return "nominal"
+        }
+    }
+
     func read() -> ThermalSnapshot {
+        let pressure = pressureString()
         guard opened, !tempKeys.isEmpty else {
-            return ThermalSnapshot(available: false, socTempC: 0, fanRPM: 0, fanPresent: false)
+            return ThermalSnapshot(available: false, socTempC: 0, fanRPM: 0, fanPresent: false, pressure: pressure)
         }
         var sum = 0.0, n = 0.0
         for key in tempKeys {
@@ -57,6 +70,6 @@ final class ThermalReader {
         }
 
         return ThermalSnapshot(available: n > 0, socTempC: temp,
-                               fanRPM: Int(maxRPM.rounded()), fanPresent: present)
+                               fanRPM: Int(maxRPM.rounded()), fanPresent: present, pressure: pressure)
     }
 }

@@ -64,11 +64,24 @@ public struct MemorySnapshot: Codable, Sendable {
     public var appBytes: UInt64
     /// Used as a fraction of total, 0 to 100.
     public var usedPercent: Double
+    /// Swap in use, and the swap file's current size. Swap climbing is the sign a
+    /// local model no longer fits in memory and generation is about to crawl.
+    public var swapUsedBytes: UInt64
+    public var swapTotalBytes: UInt64
+    /// How much memory the GPU is allowed to use (Metal's recommended working-set
+    /// size). The practical "will this model fit" ceiling on Apple Silicon.
+    public var gpuLimitBytes: UInt64
+    /// The OS memory-pressure level: "normal", "warning", or "critical".
+    public var pressure: String
 
     public init(totalBytes: UInt64, usedBytes: UInt64, wiredBytes: UInt64,
-                compressedBytes: UInt64, appBytes: UInt64, usedPercent: Double) {
+                compressedBytes: UInt64, appBytes: UInt64, usedPercent: Double,
+                swapUsedBytes: UInt64 = 0, swapTotalBytes: UInt64 = 0,
+                gpuLimitBytes: UInt64 = 0, pressure: String = "normal") {
         self.totalBytes = totalBytes; self.usedBytes = usedBytes; self.wiredBytes = wiredBytes
         self.compressedBytes = compressedBytes; self.appBytes = appBytes; self.usedPercent = usedPercent
+        self.swapUsedBytes = swapUsedBytes; self.swapTotalBytes = swapTotalBytes
+        self.gpuLimitBytes = gpuLimitBytes; self.pressure = pressure
     }
 }
 
@@ -77,13 +90,17 @@ public struct PowerSnapshot: Codable, Sendable {
     public var cpuWatts: Double
     /// Watts drawn by the GPU over the sample window.
     public var gpuWatts: Double
+    /// Watts drawn by the Neural Engine over the sample window. Near zero unless a
+    /// CoreML model is running; GPU-based LLMs (Metal, MLX) barely touch it.
+    public var aneWatts: Double
     /// CPU + GPU. A package-ish figure, not the whole system.
     public var totalWatts: Double
     /// Whether power came from IOReport (false means unavailable).
     public var available: Bool
 
-    public init(cpuWatts: Double, gpuWatts: Double, totalWatts: Double, available: Bool) {
-        self.cpuWatts = cpuWatts; self.gpuWatts = gpuWatts; self.totalWatts = totalWatts; self.available = available
+    public init(cpuWatts: Double, gpuWatts: Double, aneWatts: Double = 0, totalWatts: Double, available: Bool) {
+        self.cpuWatts = cpuWatts; self.gpuWatts = gpuWatts; self.aneWatts = aneWatts
+        self.totalWatts = totalWatts; self.available = available
     }
 }
 
@@ -132,10 +149,15 @@ public struct ThermalSnapshot: Codable, Sendable {
     public var fanRPM: Int
     /// Whether this machine has fans at all.
     public var fanPresent: Bool
+    /// The OS thermal-pressure state: "nominal", "fair", "serious", or "critical".
+    /// "serious" and up mean the machine is throttling, which is what quietly slows
+    /// a long inference run.
+    public var pressure: String
 
-    public init(available: Bool, socTempC: Double, fanRPM: Int, fanPresent: Bool) {
+    public init(available: Bool, socTempC: Double, fanRPM: Int, fanPresent: Bool,
+                pressure: String = "nominal") {
         self.available = available; self.socTempC = socTempC
-        self.fanRPM = fanRPM; self.fanPresent = fanPresent
+        self.fanRPM = fanRPM; self.fanPresent = fanPresent; self.pressure = pressure
     }
 }
 

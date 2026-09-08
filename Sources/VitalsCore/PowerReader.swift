@@ -33,6 +33,7 @@ final class PowerReader {
 
         var cpuJoules = 0.0
         var gpuJoules = 0.0
+        var aneJoules = 0.0
         var sawAny = false
 
         let elapsed = sub.sampleDelta { chan in
@@ -46,6 +47,9 @@ final class PowerReader {
             case "GPU Energy":
                 gpuJoules += joules
                 sawAny = true
+            case "ANE":
+                aneJoules += joules
+                sawAny = true
             default:
                 break
             }
@@ -56,9 +60,11 @@ final class PowerReader {
         }
         let cpuW = cpuJoules / seconds
         let gpuW = gpuJoules / seconds
+        let aneW = aneJoules / seconds
         return PowerSnapshot(
             cpuWatts: cpuW,
             gpuWatts: gpuW,
+            aneWatts: aneW,
             totalWatts: cpuW + gpuW,
             available: true
         )
