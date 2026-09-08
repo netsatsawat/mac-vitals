@@ -1,0 +1,17 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "flat-type-hierarchy",
+        "value": "*",
+        "files": [
+          "docs/design/onboarding.html"
+        ],
+        "createdAt": "2026-09-08T05:54:22.678Z",
+        "reason": "Render fixture mirrors the shipped SwiftUI popover's compact macOS type scale (13/12.5/11/10px); widening steps would stop it matching the real product UI."
+      }
+    ]
+  }
+}
