@@ -38,17 +38,23 @@ public struct Trace {
     }
 
     public mutating func add(_ s: Snapshot) {
-        let dt = max(0, s.timestamp.timeIntervalSince(lastTime))
-        lastTime = s.timestamp
+        add(Sample(from: s))
+    }
+
+    /// Same accumulation from a compact sample, so the app can measure a task by
+    /// replaying its stored per-second history.
+    public mutating func add(_ s: Sample) {
+        let dt = max(0, s.t.timeIntervalSince(lastTime))
+        lastTime = s.t
         samples += 1
-        cpuSum += s.cpu.usage; cpuPeak = max(cpuPeak, s.cpu.usage)
-        gpuSum += s.gpu.usage; gpuPeak = max(gpuPeak, s.gpu.usage)
-        energyJoules += s.power.totalWatts * dt
-        netDown += s.network.downloadBytesPerSec * dt
-        netUp += s.network.uploadBytesPerSec * dt
-        diskRead += s.disk.readBytesPerSec * dt
-        diskWrite += s.disk.writeBytesPerSec * dt
-        tempPeak = max(tempPeak, s.thermal.socTempC)
+        cpuSum += s.cpu; cpuPeak = max(cpuPeak, s.cpu)
+        gpuSum += s.gpu; gpuPeak = max(gpuPeak, s.gpu)
+        energyJoules += s.watts * dt
+        netDown += s.netDown * dt
+        netUp += s.netUp * dt
+        diskRead += s.diskRead * dt
+        diskWrite += s.diskWrite * dt
+        tempPeak = max(tempPeak, s.temp ?? 0)
     }
 
     public func result() -> TraceResult {

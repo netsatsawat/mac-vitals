@@ -101,7 +101,7 @@ struct MainView: View {
         Button {
             if let start = traceStart {
                 var t = Trace(start: start)
-                for s in store.history where s.timestamp >= start { t.add(s) }
+                for s in store.history where s.t >= start { t.add(s) }
                 traceResult = t.result(); traceStart = nil; showTrace = true
             } else {
                 traceStart = Date()
@@ -153,7 +153,7 @@ struct MainView: View {
     private func coverage() -> TimeInterval {
         let oldest: Date?
         switch range.tier {
-        case .live: oldest = store.history.first?.timestamp
+        case .live: oldest = store.history.first?.t
         case .minutes: oldest = store.minutes.first?.t
         case .hours: oldest = store.hours.first?.t
         }
@@ -242,7 +242,7 @@ struct MainView: View {
         let raw: [(Date, Double)]
         switch range.tier {
         case .live:
-            raw = store.history.filter { $0.timestamp >= cutoff }.map { ($0.timestamp, metric.value($0)) }
+            raw = store.history.filter { $0.t >= cutoff }.map { ($0.t, metric.value($0)) }
         case .minutes:
             raw = store.minutes.filter { $0.t >= cutoff }.map { ($0.t, metric.value($0)) }
         case .hours:

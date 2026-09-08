@@ -28,13 +28,13 @@ enum RenderTool {
 
     /// Plausible aggregated samples spaced `step` seconds apart, for rendering the
     /// minute and hour tiers behind the long ranges.
-    static func syntheticSamples(_ n: Int, step: Double) -> [MinuteSample] {
+    static func syntheticSamples(_ n: Int, step: Double) -> [Sample] {
         let now = Date()
         func clamp(_ v: Double) -> Double { max(0, min(100, v)) }
         return (0..<n).map { i in
             let f = Double(i)
             let t = now.addingTimeInterval(Double(i - n) * step)
-            return MinuteSample(
+            return Sample(
                 t: t,
                 cpu: clamp(38 + 26 * sin(f / 70) + 10 * sin(f / 13)),
                 gpu: clamp(45 + 32 * sin(f / 90 + 1)),

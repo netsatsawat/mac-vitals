@@ -35,7 +35,7 @@ It shows up three ways, over one engine:
 - **Power** in watts, per rail: CPU and GPU, read from the chip's energy counters.
 - **Network, disk, and battery** too: up and down throughput, read and write activity with free space, and charge.
 - **Temperature and fan** from the SMC, and **task traces** that measure what a build or run cost (CPU, GPU, watt-hours, bytes moved) in the app, the CLI, and over MCP.
-- **A full window** with every metric charted from the last minute to a full year, plus year-to-date, with history persisted across restarts so the long ranges fill in over time.
+- **A full window** with every metric charted from the last minute to a full year, plus year-to-date, with all three resolutions persisted so every range picks up where it left off and the long ranges fill in over time.
 - **No password, ever.** Everything comes through Apple's IOReport interface as a normal user.
 - **Zero dependencies.** One Swift package, no runtime, no helper daemon, no kernel extension.
 - **Light and dark**, following the system, on native vibrancy.

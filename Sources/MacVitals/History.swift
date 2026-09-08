@@ -1,104 +1,45 @@
 import Foundation
 import VitalsCore
 
-/// One aggregated point (a minute's or an hour's average of each metric).
-/// Persisted so the long ranges survive quits and fill in over time. Live
-/// 1-second detail stays in memory for the short ranges.
-struct MinuteSample: Codable {
-    var t: Date
-    var cpu: Double
-    var gpu: Double
-    var mem: Double
-    var watts: Double
-    var netDown: Double
-    var netUp: Double
-    var diskRead: Double
-    var diskWrite: Double
-    // Optional so history files written before these existed still decode.
-    var temp: Double?
-    var fan: Double?
-
-    init(t: Date, cpu: Double, gpu: Double, mem: Double, watts: Double,
-         netDown: Double, netUp: Double, diskRead: Double, diskWrite: Double,
-         temp: Double? = nil, fan: Double? = nil) {
-        self.t = t; self.cpu = cpu; self.gpu = gpu; self.mem = mem; self.watts = watts
-        self.netDown = netDown; self.netUp = netUp; self.diskRead = diskRead; self.diskWrite = diskWrite
-        self.temp = temp; self.fan = fan
-    }
-
-    /// Average a minute of 1-second snapshots into one persisted point.
-    init(from snapshots: [Snapshot]) {
-        let n = Double(max(snapshots.count, 1))
-        func avg(_ f: (Snapshot) -> Double) -> Double { snapshots.reduce(0) { $0 + f($1) } / n }
-        t = snapshots.last?.timestamp ?? Date()
-        cpu = avg { $0.cpu.usage }
-        gpu = avg { $0.gpu.usage }
-        mem = avg { $0.memory.usedPercent }
-        watts = avg { $0.power.totalWatts }
-        netDown = avg { $0.network.downloadBytesPerSec }
-        netUp = avg { $0.network.uploadBytesPerSec }
-        diskRead = avg { $0.disk.readBytesPerSec }
-        diskWrite = avg { $0.disk.writeBytesPerSec }
-        temp = avg { $0.thermal.socTempC }
-        fan = avg { Double($0.thermal.fanRPM) }
-    }
-
-    /// Roll a set of minute samples up into one coarser (hourly) point.
-    init(rollingUp samples: [MinuteSample]) {
-        let n = Double(max(samples.count, 1))
-        func avg(_ f: (MinuteSample) -> Double) -> Double { samples.reduce(0) { $0 + f($1) } / n }
-        t = samples.last?.t ?? Date()
-        cpu = avg(\.cpu); gpu = avg(\.gpu); mem = avg(\.mem); watts = avg(\.watts)
-        netDown = avg(\.netDown); netUp = avg(\.netUp); diskRead = avg(\.diskRead); diskWrite = avg(\.diskWrite)
-        temp = avg { $0.temp ?? 0 }; fan = avg { $0.fan ?? 0 }
-    }
-}
-
-/// The metrics a chart can plot, with one extractor per data source so the same
-/// chart reads live snapshots for short ranges and aggregated samples for long ones.
+/// The metrics a chart can plot. One extractor pulls the value off a `Sample`,
+/// so the same chart code reads every resolution: raw seconds, minute averages,
+/// or hour averages.
 enum Metric {
     case cpu, gpu, memory, power, netDown, netUp, diskRead, diskWrite, temperature, fanRPM
 
-    func value(_ s: Snapshot) -> Double {
+    func value(_ s: Sample) -> Double {
         switch self {
-        case .cpu: s.cpu.usage
-        case .gpu: s.gpu.usage
-        case .memory: s.memory.usedPercent
-        case .power: s.power.totalWatts
-        case .netDown: s.network.downloadBytesPerSec
-        case .netUp: s.network.uploadBytesPerSec
-        case .diskRead: s.disk.readBytesPerSec
-        case .diskWrite: s.disk.writeBytesPerSec
-        case .temperature: s.thermal.socTempC
-        case .fanRPM: Double(s.thermal.fanRPM)
-        }
-    }
-
-    func value(_ m: MinuteSample) -> Double {
-        switch self {
-        case .cpu: m.cpu
-        case .gpu: m.gpu
-        case .memory: m.mem
-        case .power: m.watts
-        case .netDown: m.netDown
-        case .netUp: m.netUp
-        case .diskRead: m.diskRead
-        case .diskWrite: m.diskWrite
-        case .temperature: m.temp ?? 0
-        case .fanRPM: m.fan ?? 0
+        case .cpu: s.cpu
+        case .gpu: s.gpu
+        case .memory: s.mem
+        case .power: s.watts
+        case .netDown: s.netDown
+        case .netUp: s.netUp
+        case .diskRead: s.diskRead
+        case .diskWrite: s.diskWrite
+        case .temperature: s.temp ?? 0
+        case .fanRPM: s.fan ?? 0
         }
     }
 }
 
-/// Append-only NDJSON persistence for one resolution tier (minutes or hours).
-/// Loads on launch, appends one line per new sample, and prunes to its retention.
-final class HistoryStore {
+/// Append-only NDJSON persistence for one resolution tier (seconds, minutes, or
+/// hours). Loads on launch, appends one line per new sample, and prunes to its
+/// retention with a slack margin so the one-second tier does not rewrite the
+/// whole file every second: it appends all day and trims only when it drifts a
+/// slack's worth past the cap.
+final class TierStore {
+    /// The bucket width this tier holds, in seconds (1, 60, or 3600).
+    let resolution: TimeInterval
     private let url: URL
     private let retention: Int
-    private(set) var samples: [MinuteSample] = []
+    private let slack: Int
+    private(set) var samples: [Sample] = []
 
-    init(filename: String, retention: Int) {
+    init(filename: String, resolution: TimeInterval, retention: Int) {
+        self.resolution = resolution
         self.retention = retention
+        self.slack = max(60, retention / 8)
         let base = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
             .appendingPathComponent("MacVitals", isDirectory: true)
         try? FileManager.default.createDirectory(at: base, withIntermediateDirectories: true)
@@ -116,9 +57,9 @@ final class HistoryStore {
     private func load() {
         guard let text = try? String(contentsOf: url, encoding: .utf8) else { return }
         let dec = decoder()
-        var parsed: [MinuteSample] = []
+        var parsed: [Sample] = []
         for line in text.split(separator: "\n") {
-            if let data = line.data(using: .utf8), let m = try? dec.decode(MinuteSample.self, from: data) {
+            if let data = line.data(using: .utf8), let m = try? dec.decode(Sample.self, from: data) {
                 parsed.append(m)
             }
         }
@@ -129,13 +70,31 @@ final class HistoryStore {
         samples = parsed
     }
 
-    func append(_ m: MinuteSample) {
+    /// Append one new sample. Cheap in the common case (one line to the file);
+    /// only rewrites when the file has grown a slack past its retention.
+    func append(_ m: Sample) {
         samples.append(m)
-        if samples.count > retention {
+        if samples.count > retention + slack {
             samples.removeFirst(samples.count - retention)
             rewrite(samples)
-            return
+        } else {
+            appendLine(m)
         }
+    }
+
+    /// Fold in a batch of derived samples (a launch backfilling coarser tiers).
+    /// Keeps the tier sorted and pruned, then rewrites once.
+    func merge(_ additions: [Sample]) {
+        guard !additions.isEmpty else { return }
+        samples.append(contentsOf: additions)
+        samples.sort { $0.t < $1.t }
+        if samples.count > retention {
+            samples.removeFirst(samples.count - retention)
+        }
+        rewrite(samples)
+    }
+
+    private func appendLine(_ m: Sample) {
         guard let data = try? encoder().encode(m) else { return }
         var line = data
         line.append(0x0a)
@@ -148,7 +107,7 @@ final class HistoryStore {
         }
     }
 
-    private func rewrite(_ samples: [MinuteSample]) {
+    private func rewrite(_ samples: [Sample]) {
         let enc = encoder()
         var out = Data()
         for s in samples {
