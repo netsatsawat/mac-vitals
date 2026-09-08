@@ -15,6 +15,17 @@ enum RenderTool {
         write(renderer, to: path)
     }
 
+    /// A freshly-started machine: only a few minutes of history against a 24h
+    /// range, to show the "collecting…" hint.
+    static func renderSparse(to path: String) {
+        let store = SampleStore(seed: Array(synthetic().suffix(180)),
+                                minutes: syntheticSamples(8, step: 60), hours: [])
+        let view = MainView(store: store, scrolls: false, initialRange: .h24).frame(width: 840, height: 760)
+        let renderer = ImageRenderer(content: view)
+        renderer.scale = 2
+        write(renderer, to: path)
+    }
+
     /// Plausible aggregated samples spaced `step` seconds apart, for rendering the
     /// minute and hour tiers behind the long ranges.
     static func syntheticSamples(_ n: Int, step: Double) -> [MinuteSample] {

@@ -48,6 +48,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             RenderTool.renderMainWindow(to: args[i + 1], range: .d365)
             NSApp.terminate(nil)
         }
+        if let i = args.firstIndex(of: "--render-sparse"), i + 1 < args.count {
+            RenderTool.renderSparse(to: args[i + 1])
+            NSApp.terminate(nil)
+        }
         if let i = args.firstIndex(of: "--render"), i + 1 < args.count {
             RenderTool.renderMainWindow(to: args[i + 1])
             NSApp.terminate(nil)

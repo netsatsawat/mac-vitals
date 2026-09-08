@@ -84,9 +84,43 @@ struct MainView: View {
             Text("Mac Vitals").font(.system(size: 14, weight: .semibold)).foregroundStyle(Palette.ink)
             batteryPill
             Spacer()
+            collectingHint
             rangeControl
         }
         .padding(.horizontal, 16).padding(.vertical, 12)
+    }
+
+    /// Seconds of history actually available for the current range's tier.
+    private func coverage() -> TimeInterval {
+        let oldest: Date?
+        switch range.tier {
+        case .live: oldest = store.history.first?.timestamp
+        case .minutes: oldest = store.minutes.first?.t
+        case .hours: oldest = store.hours.first?.t
+        }
+        guard let oldest else { return 0 }
+        return Date().timeIntervalSince(oldest)
+    }
+
+    private func shortDuration(_ s: TimeInterval) -> String {
+        let x = Int(s)
+        if x >= 86_400 { return "\(x / 86_400)d" }
+        if x >= 3600 { return "\(x / 3600)h" }
+        if x >= 60 { return "\(x / 60)m" }
+        return "\(x)s"
+    }
+
+    /// Shown when the app has not been running long enough to fill the range yet.
+    @ViewBuilder private var collectingHint: some View {
+        let covered = coverage()
+        if covered < range.seconds * 0.9 {
+            HStack(spacing: 5) {
+                Image(systemName: "clock.arrow.circlepath").font(.system(size: 10, weight: .semibold))
+                Text(covered < 60 ? "collecting…" : "collecting · \(shortDuration(covered)) of \(range.rawValue)")
+                    .font(.system(size: 10.5, weight: .medium))
+            }
+            .foregroundStyle(Palette.ink3)
+        }
     }
 
     private var rangeControl: some View {
