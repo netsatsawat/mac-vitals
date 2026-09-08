@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mac Vitals — macOS menu bar system monitor for Apple Silicon</title>
+<meta name="description" content="Open-source macOS menu bar system monitor for Apple Silicon. Live CPU, GPU, memory, power, temperature, and fan, with history and an MCP server for AI agents. No sudo, no dependencies. A free iStat Menus alternative.">
+<link rel="canonical" href="https://netsatsawat.github.io/mac-vitals/">
+<meta name="theme-color" content="#0c0a16">
+<meta name="keywords" content="macOS system monitor, Apple Silicon, menu bar, CPU, GPU, memory, power, temperature, fan, MCP, iStat Menus alternative, stats, macmon, Swift, open source">
+
+<meta property="og:type" content="website">
+<meta property="og:title" content="Mac Vitals — macOS system monitor for Apple Silicon">
+<meta property="og:description" content="Live CPU, GPU, memory, power, temperature, and fan, one glance away. No sudo, no dependencies, with an MCP server for AI agents.">
+<meta property="og:url" content="https://netsatsawat.github.io/mac-vitals/">
+<meta property="og:image" content="https://netsatsawat.github.io/mac-vitals/social-preview.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Mac Vitals — macOS system monitor for Apple Silicon">
+<meta name="twitter:description" content="Live CPU, GPU, memory, power, temperature, and fan, one glance away. No sudo, no dependencies, with an MCP server for AI agents.">
+<meta name="twitter:image" content="https://netsatsawat.github.io/mac-vitals/social-preview.png">
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "Mac Vitals",
+  "applicationCategory": "DeveloperApplication",
+  "operatingSystem": "macOS 14+ (Apple Silicon)",
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+  "description": "Open-source macOS menu bar system monitor for Apple Silicon. Live CPU, GPU, memory, power, temperature, and fan, with history and an MCP server for AI agents.",
+  "url": "https://netsatsawat.github.io/mac-vitals/",
+  "downloadUrl": "https://github.com/netsatsawat/mac-vitals",
+  "license": "https://github.com/netsatsawat/mac-vitals/blob/main/LICENSE"
+}
+</script>
+
+<style>
+  :root {
+    --bg: #0b0910; --panel: rgba(255,255,255,.045); --hair: rgba(255,255,255,.09);
+    --ink: #f5f5f7; --ink2: rgba(235,235,245,.66); --ink3: rgba(235,235,245,.42);
+    --green: #34c759; --blue: #0a84ff; --amber: #ff9f0a; --purple: #bf5af2;
+    --font: -apple-system, "SF Pro Text", "SF Pro Display", system-ui, Segoe UI, Roboto, sans-serif;
+    --num: "SF Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+    --max: 1080px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: var(--font); color: var(--ink); background: var(--bg);
+    -webkit-font-smoothing: antialiased; line-height: 1.5;
+    background-image: radial-gradient(120% 80% at 12% -8%, #2b2150 0%, #17132f 34%, #0b0910 70%);
+    background-repeat: no-repeat;
+  }
+  a { color: inherit; text-decoration: none; }
+  img { max-width: 100%; display: block; }
+  .wrap { max-width: var(--max); margin: 0 auto; padding: 0 24px; }
+
+  /* nav */
+  nav { position: sticky; top: 0; z-index: 20; backdrop-filter: blur(18px);
+    background: rgba(11,9,16,.6); border-bottom: .5px solid var(--hair); }
+  nav .wrap { display: flex; align-items: center; gap: 12px; height: 58px; }
+  nav .brand { display: flex; align-items: center; gap: 9px; font-weight: 700; letter-spacing: -.01em; font-size: 16px; }
+  nav .brand svg { width: 24px; height: 24px; }
+  nav .sp { flex: 1; }
+  nav .links { display: flex; align-items: center; gap: 22px; font-size: 14px; color: var(--ink2); }
+  nav .links a:hover { color: var(--ink); }
+  nav .gh { display: inline-flex; align-items: center; gap: 7px; padding: 7px 13px; border-radius: 9px;
+    background: var(--ink); color: #0b0910; font-weight: 600; font-size: 13.5px; }
+  @media (max-width: 680px) { nav .links a.hide-sm { display: none; } }
+
+  /* hero */
+  .hero { padding: 76px 0 40px; text-align: center; }
+  .eyebrow { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600;
+    color: var(--ink2); background: var(--panel); border: .5px solid var(--hair);
+    padding: 6px 13px; border-radius: 999px; margin-bottom: 24px; }
+  .eyebrow i { width: 7px; height: 7px; border-radius: 50%; background: var(--green); box-shadow: 0 0 0 3px rgba(52,199,89,.2); }
+  h1 { font-size: clamp(38px, 6vw, 62px); line-height: 1.04; letter-spacing: -.03em; font-weight: 700;
+    text-wrap: balance; margin-bottom: 20px; }
+  h1 .grad { background: linear-gradient(96deg, #34c759, #0a84ff 60%, #bf5af2);
+    -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .lede { font-size: clamp(17px, 2.3vw, 21px); color: var(--ink2); max-width: 620px; margin: 0 auto 30px; text-wrap: pretty; }
+  .cta { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+  .btn { display: inline-flex; align-items: center; gap: 8px; padding: 12px 20px; border-radius: 11px;
+    font-weight: 600; font-size: 15px; border: .5px solid transparent; }
+  .btn.primary { background: var(--ink); color: #0b0910; }
+  .btn.primary:hover { transform: translateY(-1px); }
+  .btn.ghost { background: var(--panel); border-color: var(--hair); color: var(--ink); }
+  .btn.ghost:hover { background: rgba(255,255,255,.09); }
+  .btn { transition: transform .15s ease, background .15s ease; }
+
+  .shot { margin: 46px auto 0; max-width: 940px; border-radius: 16px; overflow: hidden;
+    border: .5px solid var(--hair); box-shadow: 0 40px 90px -30px rgba(0,0,0,.8); }
+
+  /* sections */
+  section { padding: 66px 0; }
+  .kicker { font-size: 13px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--blue); margin-bottom: 12px; }
+  h2 { font-size: clamp(27px, 4vw, 38px); letter-spacing: -.02em; line-height: 1.12; text-wrap: balance; margin-bottom: 14px; }
+  .sec-lede { color: var(--ink2); max-width: 640px; font-size: 17px; }
+
+  /* feature grid */
+  .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 38px; }
+  @media (max-width: 860px) { .grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 560px) { .grid { grid-template-columns: 1fr; } }
+  .card { background: var(--panel); border: .5px solid var(--hair); border-radius: 15px; padding: 20px; }
+  .card .ic { width: 38px; height: 38px; border-radius: 10px; display: grid; place-items: center; margin-bottom: 14px; }
+  .card .ic svg { width: 20px; height: 20px; }
+  .card h3 { font-size: 16.5px; letter-spacing: -.01em; margin-bottom: 6px; }
+  .card p { font-size: 14px; color: var(--ink2); }
+
+  /* split */
+  .split { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: center; }
+  .split.reverse .txt { order: 2; }
+  @media (max-width: 800px) { .split { grid-template-columns: 1fr; gap: 26px; } .split.reverse .txt { order: 0; } }
+  .split img { border-radius: 14px; border: .5px solid var(--hair); box-shadow: 0 30px 70px -30px rgba(0,0,0,.7); }
+  .split ul { list-style: none; margin-top: 18px; display: flex; flex-direction: column; gap: 11px; }
+  .split li { display: flex; gap: 10px; font-size: 15px; color: var(--ink2); }
+  .split li svg { width: 18px; height: 18px; flex: none; margin-top: 2px; color: var(--green); }
+
+  /* install */
+  .code { background: #08070d; border: .5px solid var(--hair); border-radius: 14px; padding: 20px 22px;
+    font-family: var(--num); font-size: 13.5px; color: #d9d9e3; overflow-x: auto; margin-top: 24px; line-height: 1.75; }
+  .code .c { color: var(--ink3); }
+  .code .p { color: var(--green); }
+
+  /* table */
+  .tablewrap { overflow-x: auto; margin-top: 30px; border: .5px solid var(--hair); border-radius: 14px; }
+  table { border-collapse: collapse; width: 100%; font-size: 14.5px; min-width: 560px; }
+  th, td { padding: 13px 16px; text-align: center; border-bottom: .5px solid var(--hair); }
+  th:first-child, td:first-child { text-align: left; color: var(--ink2); }
+  thead th { font-weight: 700; }
+  thead th.us { color: var(--green); }
+  tbody tr:last-child td { border-bottom: none; }
+  .yes { color: var(--green); font-weight: 700; }
+  .no { color: var(--ink3); }
+
+  footer { border-top: .5px solid var(--hair); padding: 40px 0 60px; color: var(--ink3); font-size: 14px; }
+  footer .wrap { display: flex; flex-wrap: wrap; gap: 10px 26px; align-items: center; }
+  footer a { color: var(--ink2); }
+  footer a:hover { color: var(--ink); }
+  footer .sp { flex: 1; }
+</style>
+</head>
+<body>
+
+<nav><div class="wrap">
+  <a class="brand" href="#top">
+    <svg viewBox="0 0 24 24" fill="none"><defs><linearGradient id="g" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#34c759"/><stop offset=".55" stop-color="#ffcc00"/><stop offset="1" stop-color="#ff3b30"/></linearGradient></defs><g transform="rotate(135 12 12)"><circle cx="12" cy="12" r="7.5" stroke="#ffffff" stroke-opacity=".18" stroke-width="3.2" stroke-linecap="round" stroke-dasharray="35.3 11.8"/><circle cx="12" cy="12" r="7.5" stroke="url(#g)" stroke-width="3.2" stroke-linecap="round" stroke-dasharray="26.4 20.7"/></g><circle cx="12" cy="12" r="1.7" fill="#fff"/></svg>
+    Mac Vitals
+  </a>
+  <span class="sp"></span>
+  <div class="links">
+    <a class="hide-sm" href="#features">Features</a>
+    <a class="hide-sm" href="#install">Install</a>
+    <a class="hide-sm" href="#agent">For agents</a>
+    <a class="gh" href="https://github.com/netsatsawat/mac-vitals">GitHub ↗</a>
+  </div>
+</div></nav>
+
+<a id="top"></a>
+<header class="hero"><div class="wrap">
+  <span class="eyebrow"><i></i>Open source · macOS 14+ · Apple Silicon</span>
+  <h1>The Mac's own numbers,<br><span class="grad">one glance away</span></h1>
+  <p class="lede">An open-source macOS menu bar system monitor for Apple Silicon. Live CPU, GPU, memory, power, temperature, and fan, with history you keep and an MCP server your coding agent can read. No password, no dependencies.</p>
+  <div class="cta">
+    <a class="btn primary" href="https://github.com/netsatsawat/mac-vitals">Get it on GitHub</a>
+    <a class="btn ghost" href="#install">Build from source</a>
+  </div>
+  <img class="shot" src="hero.png" alt="Mac Vitals menu bar readout, popover, and floating widget showing CPU, GPU, memory, power, network, and battery on Apple Silicon" width="940" height="470">
+</div></header>
+
+<section id="features"><div class="wrap">
+  <div class="kicker">Everything the chip measures</div>
+  <h2>One engine, every metric, no root</h2>
+  <p class="sec-lede">Mac Vitals reads it all as a normal user through Apple's IOReport interface. No <code>sudo</code> prompt, no helper daemon, no kernel extension.</p>
+  <div class="grid">
+    <div class="card"><div class="ic" style="background:rgba(52,199,89,.16);color:#34c759"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="7" width="10" height="10" rx="2.4"/><path d="M10 2v3M14 2v3M10 19v3M14 19v3M2 10h3M2 14h3M19 10h3M19 14h3"/></svg></div><h3>CPU, per cluster</h3><p>Overall load plus the efficiency and performance clusters, split out, and every core.</p></div>
+    <div class="card"><div class="ic" style="background:rgba(255,204,0,.16);color:#ffcc00"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="6" width="19" height="12" rx="2.6"/><circle cx="9" cy="12" r="2.6"/><path d="M15 10.5h4M15 13.5h4"/></svg></div><h3>GPU, calibrated</h3><p>Utilization from the hardware's performance-state residency, calibrated against <code>powermetrics</code>.</p></div>
+    <div class="card"><div class="ic" style="background:rgba(10,132,255,.16);color:#0a84ff"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="9" rx="1.8"/><path d="M6.5 8V5.5M11 8V5.5M15.5 8V5.5M7 12v2M12 12v2M17 12v2"/></svg></div><h3>Memory &amp; power</h3><p>Memory used against total, and power in watts per rail, CPU and GPU, from the chip's energy counters.</p></div>
+    <div class="card"><div class="ic" style="background:rgba(191,90,242,.16);color:#bf5af2"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.5 3.8 5.7 3.8 9S14.5 18.5 12 21c-2.5-2.5-3.8-5.7-3.8-9S9.5 5.5 12 3Z"/></svg></div><h3>Network, disk, battery</h3><p>Throughput up and down, read and write with free space, and charge.</p></div>
+    <div class="card"><div class="ic" style="background:rgba(255,159,10,.16);color:#ff9f0a"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M14 14.8V5a2 2 0 0 0-4 0v9.8a4 4 0 1 0 4 0Z"/></svg></div><h3>Temperature &amp; fan</h3><p>SoC temperature and fan speed from the SMC, with task traces that measure what a build cost.</p></div>
+    <div class="card"><div class="ic" style="background:rgba(52,199,89,.16);color:#34c759"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 17l6-6 4 4 6-8"/></svg></div><h3>History you keep</h3><p>Charted from one minute to a year, persisted to disk, so every range survives a quit.</p></div>
+  </div>
+</div></section>
+
+<section style="padding-top:0"><div class="wrap">
+  <div class="split reverse">
+    <div class="txt">
+      <div class="kicker">The full window</div>
+      <h2>From the last minute to a full year</h2>
+      <p class="sec-lede">Every metric charted over a range you pick, plus year-to-date. Three resolutions kept on disk, so the long views fill in over time instead of starting blank.</p>
+      <ul>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Per-second detail, minute averages, hour averages</li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>A few MB in all, survives restarts</li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Light and dark, on native vibrancy</li>
+      </ul>
+    </div>
+    <img src="window.png" alt="The Mac Vitals window charting CPU, GPU, memory, power, network, and disk over a selectable range" width="520" height="386" loading="lazy">
+  </div>
+</div></section>
+
+<section id="install" style="padding-top:0"><div class="wrap">
+  <div class="kicker">Install</div>
+  <h2>Build it in a minute</h2>
+  <p class="sec-lede">Needs macOS 14 or later on Apple Silicon and the Xcode Command Line Tools. Not yet notarized, so build from source for now.</p>
+  <div class="code">
+<span class="c"># clone and build the app</span><br>
+git clone https://github.com/netsatsawat/mac-vitals.git<br>
+cd mac-vitals<br>
+./scripts/build-app.sh<br>
+open build/MacVitals.app<br>
+</div>
+</div></section>
+
+<section id="agent" style="padding-top:0"><div class="wrap">
+  <div class="split">
+    <div class="txt">
+      <div class="kicker">For your AI agent</div>
+      <h2>The same engine speaks MCP</h2>
+      <p class="sec-lede">Mac Vitals runs as a read-only <a href="https://modelcontextprotocol.io" style="color:var(--blue)">Model Context Protocol</a> server over stdio. Your coding agent can read the machine, and wrap its own build in a trace to see what it cost.</p>
+      <ul>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><code>get_vitals</code> and <code>get_vitals_history</code></li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><code>start_trace</code> and <code>stop_trace</code> for energy and cost</li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Read-only. It sees the machine, never changes it.</li>
+      </ul>
+    </div>
+    <div class="code" style="margin-top:0">
+<span class="c"># add it to Claude Code</span><br>
+claude mcp add mac-vitals -- \<br>
+&nbsp;&nbsp;/path/to/.build/release/vitals --mcp<br>
+</div>
+  </div>
+</div></section>
+
+<section style="padding-top:0"><div class="wrap">
+  <div class="kicker">How it compares</div>
+  <h2>A free, native alternative</h2>
+  <p class="sec-lede">A free and open-source alternative to iStat Menus, and a native-feeling companion to stats and macmon. It competes on the native look, the floating widget, and an interface an agent can read.</p>
+  <div class="tablewrap"><table>
+    <thead><tr><th>&nbsp;</th><th class="us">Mac Vitals</th><th>stats</th><th>macmon</th><th>iStat Menus</th></tr></thead>
+    <tbody>
+      <tr><td>Reads without sudo</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td></tr>
+      <tr><td>Native menu-bar item</td><td class="yes">✓</td><td class="yes">✓</td><td class="no">–</td><td class="yes">✓</td></tr>
+      <tr><td>Floating desktop widget</td><td class="yes">✓</td><td class="no">–</td><td class="no">–</td><td>partial</td></tr>
+      <tr><td>Agent-readable (MCP)</td><td class="yes">✓</td><td class="no">–</td><td class="no">–</td><td class="no">–</td></tr>
+      <tr><td>Zero dependencies</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td><td class="no">–</td></tr>
+      <tr><td>Open source</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td><td class="no">–</td></tr>
+      <tr><td>Price</td><td class="yes">free</td><td>free</td><td>free</td><td>paid</td></tr>
+    </tbody>
+  </table></div>
+</div></section>
+
+<footer><div class="wrap">
+  <span>© 2026 Net Satsawat · MIT licensed</span>
+  <span class="sp"></span>
+  <a href="https://github.com/netsatsawat/mac-vitals">GitHub</a>
+  <a href="https://github.com/netsatsawat/mac-vitals/blob/main/docs/WALKTHROUGH.md">Walkthrough</a>
+  <a href="https://github.com/netsatsawat/mac-vitals/blob/main/docs/MCP.md">MCP guide</a>
+  <a href="https://github.com/netsatsawat/mac-vitals/releases">Releases</a>
+</div></footer>
+
+</body>
+</html>
