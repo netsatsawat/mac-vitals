@@ -120,6 +120,8 @@ struct MenuBarLabel: View {
         .monospacedDigit()
         .foregroundStyle(.black) // a template image uses only the alpha shape
         .padding(.vertical, 1)
+        .padding(.horizontal, 3) // keep edge glyphs from clipping in the rendered image
+        .fixedSize()
     }
 
     private func metric(_ symbol: String, _ value: String) -> some View {
