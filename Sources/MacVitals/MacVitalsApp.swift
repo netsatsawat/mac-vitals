@@ -105,16 +105,14 @@ struct MenuBarLabel: View {
     }
 
     private func readout(_ s: Snapshot, full: Bool) -> some View {
-        HStack(spacing: 7) {
+        HStack(spacing: 9) {
             metric(Sym.cpu, "\(Int(s.cpu.usage.rounded()))%")
             metric(Sym.gpu, "\(Int(s.gpu.usage.rounded()))%")
             if full {
                 metric(Sym.mem, "\(Int(s.memory.usedPercent.rounded()))%")
-                HStack(spacing: 2) {
-                    Image(systemName: "arrow.down")
-                    Text(Fmt.rateCompact(s.network.downloadBytesPerSec))
-                    Image(systemName: "arrow.up")
-                    Text(Fmt.rateCompact(s.network.uploadBytesPerSec))
+                HStack(spacing: 7) {
+                    metric("arrow.down", Fmt.rateCompact(s.network.downloadBytesPerSec))
+                    metric("arrow.up", Fmt.rateCompact(s.network.uploadBytesPerSec))
                 }
             }
         }

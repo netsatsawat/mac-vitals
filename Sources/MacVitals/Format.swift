@@ -14,9 +14,10 @@ enum Fmt {
         String(format: "%.1f", Double(bytes) / 1_073_741_824)
     }
 
-    /// A very compact byte rate for the menu bar: "1.2M", "820K", or "0".
+    /// A very compact byte rate for the menu bar: "12M", "820K", or "0".
+    /// Integer-only to keep the item's width from jittering as rates change.
     static func rateCompact(_ bytesPerSec: Double) -> String {
-        if bytesPerSec >= 1_048_576 { return String(format: "%.1fM", bytesPerSec / 1_048_576) }
+        if bytesPerSec >= 1_048_576 { return String(format: "%.0fM", bytesPerSec / 1_048_576) }
         if bytesPerSec >= 1024 { return String(format: "%.0fK", bytesPerSec / 1024) }
         return "0"
     }
