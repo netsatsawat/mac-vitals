@@ -139,7 +139,9 @@ const I = {
   cpu:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="7" width="10" height="10" rx="2.4"/><path d="M10 2v3M14 2v3M10 19v3M14 19v3M2 10h3M2 14h3M19 10h3M19 14h3"/></svg>`,
   gpu:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="6" width="19" height="12" rx="2.6"/><circle cx="9" cy="12" r="2.6"/><path d="M15 10.5h4M15 13.5h4"/></svg>`,
   mem:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="9" rx="1.8"/><path d="M6.5 8V5.5M11 8V5.5M15.5 8V5.5M7 12v2M12 12v2M17 12v2"/></svg>`,
-  bolt:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 4 14h7l-1 8 9-12h-7l1-8Z"/></svg>`
+  bolt:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 4 14h7l-1 8 9-12h-7l1-8Z"/></svg>`,
+  down:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M6 13l6 6 6-6"/></svg>`,
+  up:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M6 11l6-6 6 6"/></svg>`
 };
 function pctHTML(v){ return `${Math.round(v)}<u>%</u>`; }
 
@@ -149,7 +151,10 @@ const cpuC=loadColor(d.cpu.usage), gpuC=loadColor(d.gpu.usage);
 document.getElementById('brandmark').innerHTML = I.gauge;
 document.getElementById('mbvit').innerHTML =
   `<span class="m">${I.cpu}<span class="v">${d.cpu.usage}%</span></span>
-   <span class="m">${I.gpu}<span class="v">${d.gpu.usage}%</span></span>`;
+   <span class="m">${I.gpu}<span class="v">${d.gpu.usage}%</span></span>
+   <span class="m">${I.mem}<span class="v">${d.mem.pct}%</span></span>
+   <span class="m">${I.down}<span class="v">2M</span></span>
+   <span class="m">${I.up}<span class="v">480K</span></span>`;
 
 document.getElementById('chips').innerHTML = [
   `<span class="chip"><i style="background:#34c759"></i>No sudo</span>`,

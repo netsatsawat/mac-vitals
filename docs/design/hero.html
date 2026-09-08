@@ -232,7 +232,9 @@ const I = {
   disk:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2.4"/><circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="0.6" fill="currentColor"/></svg>`,
   thermo:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M14 14.8V5a2 2 0 0 0-4 0v9.8a4 4 0 1 0 4 0Z"/></svg>`,
   wifi:`<svg width="16" height="13" viewBox="0 0 24 20" fill="currentColor"><path d="M12 3C7.5 3 3.7 4.8 1 7.6l2 2C5.3 7.3 8.5 6 12 6s6.7 1.3 9 3.6l2-2C20.3 4.8 16.5 3 12 3Zm0 5c-2.8 0-5.3 1.1-7 3l2 2c1.3-1.3 3-2 5-2s3.7.7 5 2l2-2c-1.7-1.9-4.2-3-7-3Zm0 5c-1.1 0-2.1.5-2.8 1.2L12 17l2.8-2.8C14.1 13.5 13.1 13 12 13Z"/></svg>`,
-  batt:`<svg width="26" height="13" viewBox="0 0 30 14" fill="none"><rect x="1" y="2" width="24" height="10" rx="2.6" stroke="currentColor" stroke-opacity=".5" stroke-width="1.2"/><rect x="3" y="4" width="16" height="6" rx="1.2" fill="currentColor"/><rect x="26.5" y="5" width="2" height="4" rx="1" fill="currentColor" fill-opacity=".5"/></svg>`
+  batt:`<svg width="26" height="13" viewBox="0 0 30 14" fill="none"><rect x="1" y="2" width="24" height="10" rx="2.6" stroke="currentColor" stroke-opacity=".5" stroke-width="1.2"/><rect x="3" y="4" width="16" height="6" rx="1.2" fill="currentColor"/><rect x="26.5" y="5" width="2" height="4" rx="1" fill="currentColor" fill-opacity=".5"/></svg>`,
+  down:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M6 13l6 6 6-6"/></svg>`,
+  up:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M6 11l6-6 6 6"/></svg>`
 };
 function pctHTML(v){ return `${Math.round(v)}<u>%</u>`; }
 function chip(color){ if(String(color).startsWith('var')) return 'rgba(10,132,255,.15)'; const m=color.match(/\d+/g); return `rgba(${m[0]},${m[1]},${m[2]},.16)`; }
@@ -284,9 +286,19 @@ function popover(d){
     <div class="plist">${rows}</div>
     <div class="pfoot"><span class="pill"><i style="background:#34c759"></i>Pressure normal</span><span class="btn">Show widget ⌥⌘V</span></div>`;
 }
+function rateCompact(s){
+  const m = String(s).match(/([\d.]+)\s*(MB|KB|GB|B)/);
+  if(!m) return '0';
+  const v = parseFloat(m[1]);
+  if(m[2]==='GB') return Math.round(v*1024)+'M';
+  if(m[2]==='MB') return Math.round(v)+'M';
+  if(m[2]==='KB') return Math.round(v)+'K';
+  return '0';
+}
 function menubarItem(d){
-  return `<span class="vit-metric">${I.cpu}<span class="val">${d.cpu.usage}%</span></span>
-          <span class="vit-metric">${I.gpu}<span class="val">${d.gpu.usage}%</span></span>`;
+  const m=(ic,v)=>`<span class="vit-metric">${ic}<span class="val">${v}</span></span>`;
+  return m(I.cpu, d.cpu.usage+'%') + m(I.gpu, d.gpu.usage+'%') + m(I.mem, d.mem.pct+'%')
+       + m(I.down, rateCompact(d.net.down)) + m(I.up, rateCompact(d.net.up));
 }
 
 for(const mode of ['dark']){
