@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mac Vitals first run</title>
+<style>
+  :root {
+    font-family: -apple-system, "SF Pro Text", "SF Pro Display", system-ui, sans-serif;
+    --num: "SF Mono", ui-monospace, "SF Pro Text", monospace;
+    --ink: #f5f5f7; --ink2: rgba(235,235,245,.66); --ink3: rgba(235,235,245,.42);
+    --track: rgba(255,255,255,.11); --hair: rgba(255,255,255,.09); --blue: #0a84ff;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    width: 360px; padding: 26px;
+    background: radial-gradient(120% 90% at 20% 8%, #3d2e72 0%, #241c4a 42%, #141127 78%, #0c0a16 100%);
+  }
+  .surface {
+    width: 300px; border-radius: 20px; padding: 16px;
+    background: rgba(32,32,36,.72);
+    box-shadow: 0 24px 50px -16px rgba(0,0,0,.62), inset 0 .5px 0 rgba(255,255,255,.14),
+      inset 0 0 0 .5px rgba(255,255,255,.06);
+  }
+  .head { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; }
+  .head .mark { width: 18px; height: 18px; color: var(--ink); opacity: .92; }
+  .head h1 { font-size: 13px; font-weight: 600; color: var(--ink); }
+  .head .live { margin-left: auto; display: flex; align-items: center; gap: 5px;
+    font-size: 10.5px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: var(--ink3); }
+  .head .live i { width: 6px; height: 6px; border-radius: 50%; background: #34c759; box-shadow: 0 0 0 3px rgba(52,199,89,.18); }
+
+  .nudge { border-radius: 11px; padding: 11px; margin-bottom: 10px;
+    background: rgba(255,255,255,.055); box-shadow: inset 0 0 0 .5px var(--hair); }
+  .nudge h2 { font-size: 12.5px; font-weight: 600; color: var(--ink); margin-bottom: 5px; }
+  .nudge p { font-size: 11px; line-height: 1.42; color: var(--ink2); margin-bottom: 10px; }
+  .nudge .row { display: flex; gap: 8px; }
+  .nudge .btn { font-size: 11px; font-weight: 600; padding: 5px 11px; border-radius: 7px; }
+  .nudge .btn.primary { background: var(--blue); color: #fff; }
+  .nudge .btn.ghost { background: var(--track); color: var(--ink2); font-weight: 500; }
+
+  .prow { display: flex; align-items: center; gap: 11px; padding: 9px 2px; }
+  .prow + .prow { border-top: .5px solid var(--hair); }
+  .prow .ic { width: 26px; height: 26px; border-radius: 8px; display: grid; place-items: center; flex: none; }
+  .prow .ic svg { width: 14px; height: 14px; }
+  .prow .meta { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+  .prow .trow { display: flex; align-items: baseline; gap: 6px; }
+  .prow .trow .name { font-size: 12.5px; font-weight: 600; color: var(--ink); }
+  .prow .trow .val { margin-left: auto; font-family: var(--num); font-size: 13px; font-weight: 600;
+    color: var(--ink); letter-spacing: -.02em; }
+  .prow .trow .val u { font-size: 9.5px; opacity: .5; text-decoration: none; }
+  .prow .bar { height: 4px; border-radius: 2px; background: var(--track); overflow: hidden; }
+  .prow .bar b { display: block; height: 100%; border-radius: 2px; }
+  .prow .sub { font-family: var(--num); font-size: 10px; color: var(--ink3); }
+</style>
+</head>
+<body>
+  <div class="surface" id="surface"></div>
+<script>
+function loadColor(p){
+  const stops=[[0,[52,199,89]],[55,[52,199,89]],[70,[255,204,0]],[85,[255,149,0]],[100,[255,59,48]]];
+  for(let i=0;i<stops.length-1;i++){const [a,ca]=stops[i],[b,cb]=stops[i+1];
+    if(p<=b){const t=(p-a)/(b-a||1);const c=ca.map((v,k)=>Math.round(v+(cb[k]-v)*t));return`rgb(${c[0]},${c[1]},${c[2]})`;}}
+  return 'rgb(255,59,48)';
+}
+const I={
+  gauge:`<svg viewBox="0 0 24 24" fill="none"><defs><linearGradient id="gm" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#34c759"/><stop offset=".55" stop-color="#ffcc00"/><stop offset="1" stop-color="#ff3b30"/></linearGradient></defs><g transform="rotate(135 12 12)"><circle cx="12" cy="12" r="7.5" stroke="currentColor" stroke-opacity="0.16" stroke-width="3.2" stroke-linecap="round" stroke-dasharray="35.3 11.8"/><circle cx="12" cy="12" r="7.5" stroke="url(#gm)" stroke-width="3.2" stroke-linecap="round" stroke-dasharray="26.4 20.7"/></g><circle cx="12" cy="12" r="1.7" fill="currentColor"/></svg>`,
+  cpu:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="7" width="10" height="10" rx="2.4"/><path d="M10 2v3M14 2v3M10 19v3M14 19v3M2 10h3M2 14h3M19 10h3M19 14h3"/></svg>`,
+  gpu:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="6" width="19" height="12" rx="2.6"/><circle cx="9" cy="12" r="2.6"/><path d="M15 10.5h4M15 13.5h4"/></svg>`,
+  mem:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="9" rx="1.8"/><path d="M6.5 8V5.5M11 8V5.5M15.5 8V5.5M7 12v2M12 12v2M17 12v2"/></svg>`
+};
+function chip(c){const m=String(c).match(/\d+/g);return m?`rgba(${m[0]},${m[1]},${m[2]},.16)`:'rgba(10,132,255,.15)';}
+function prow(o){return `<div class="prow">
+  <div class="ic" style="background:${chip(o.tint)};color:${o.tint}">${o.ic}</div>
+  <div class="meta"><div class="trow"><span class="name">${o.name}</span><span class="val">${o.val}<u>%</u></span></div>
+  <div class="bar"><b style="width:${o.bar}%;background:${o.tint}"></b></div>
+  <div class="sub">${o.sub}</div></div></div>`;}
+
+document.getElementById('surface').innerHTML = `
+  <div class="head"><span class="mark">${I.gauge}</span><h1>Mac Vitals</h1><span class="live"><i></i>Live</span></div>
+  <div class="nudge">
+    <h2>Keep Mac Vitals running?</h2>
+    <p>Launch it at login so your history keeps filling in. Everything stays on your Mac.</p>
+    <div class="row"><span class="btn primary">Launch at Login</span><span class="btn ghost">Not now</span></div>
+  </div>
+  ${prow({name:'CPU', ic:I.cpu, tint:loadColor(42), val:42, bar:42, sub:'E 18 · P 66'})}
+  ${prow({name:'GPU', ic:I.gpu, tint:loadColor(71), val:71, bar:71, sub:'calibrated'})}
+  ${prow({name:'Memory', ic:I.mem, tint:'#0a84ff', val:59, bar:59, sub:'14.2 / 24 GB'})}`;
+</script>
+</body>
+</html>

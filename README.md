@@ -65,6 +65,8 @@ The app lives in the menu bar with no Dock icon. To keep it around, drag `build/
 
 ## Using it
 
+New here? The [full walkthrough](docs/WALKTHROUGH.md) tours every surface from install to the MCP interface.
+
 - **Menu bar:** a compact CPU and GPU readout, refreshed once a second.
 - **Click it** for the popover: CPU, GPU, memory, and power, each with a minute of history.
 - **Show widget** (in the popover) toggles the floating gadget. Drag it anywhere. It floats above other windows and remembers where you left it.

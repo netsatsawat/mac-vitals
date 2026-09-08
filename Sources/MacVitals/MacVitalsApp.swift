@@ -33,6 +33,23 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
         let args = CommandLine.arguments
+
+        // Diagnostics for the Launch at Login path, so registration can be
+        // verified from the command line under the app's real bundle identity.
+        if args.contains("--login-status") {
+            print("login-item status: \(LoginItem.statusText)")
+            NSApp.terminate(nil)
+        }
+        if args.contains("--login-register") {
+            let ok = LoginItem.setEnabled(true)
+            print("register accepted: \(ok) · status now: \(LoginItem.statusText)")
+            NSApp.terminate(nil)
+        }
+        if args.contains("--login-unregister") {
+            let ok = LoginItem.setEnabled(false)
+            print("unregister accepted: \(ok) · status now: \(LoginItem.statusText)")
+            NSApp.terminate(nil)
+        }
         if let i = args.firstIndex(of: "--render-menubar"), i + 1 < args.count {
             RenderTool.renderMenuBar(to: args[i + 1])
             NSApp.terminate(nil)

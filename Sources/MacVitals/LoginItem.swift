@@ -11,6 +11,17 @@ enum LoginItem {
     /// Whether the app is currently set to launch at login.
     static var isEnabled: Bool { SMAppService.mainApp.status == .enabled }
 
+    /// The registration status in words, for diagnostics.
+    static var statusText: String {
+        switch SMAppService.mainApp.status {
+        case .notRegistered: return "not registered"
+        case .enabled: return "enabled"
+        case .requiresApproval: return "requires approval in System Settings"
+        case .notFound: return "not found"
+        @unknown default: return "unknown"
+        }
+    }
+
     /// Turn Launch at Login on or off. Returns whether the request went through,
     /// so the caller can tell when the system refused (an unsigned dev build can,
     /// until the app is notarized). Guards the status so a redundant call is a

@@ -10,6 +10,10 @@ All notable changes to this project are recorded here. The format follows
 - Launch at Login, off by default, in the popover's `⋯` menu, with a one-time
   opt-in hint on first open. Registered through `SMAppService`, so there is no
   helper and no privileged step, and the app never starts itself unasked.
+  Diagnostic flags (`--login-status`, `--login-register`, `--login-unregister`)
+  verify the registration from the terminal.
+- A full walkthrough in [docs/WALKTHROUGH.md](docs/WALKTHROUGH.md) covering every
+  surface from install to the MCP interface.
 
 ## [0.1.0] - 2026-09-08
 
