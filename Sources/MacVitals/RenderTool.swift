@@ -21,6 +21,20 @@ enum RenderTool {
         write(renderer, to: path)
     }
 
+    /// Preview of the menu-bar readout on a mock dark bar (the real bar renders it
+    /// as a monochrome template).
+    static func renderMenuBar(to path: String) {
+        let store = SampleStore(seed: synthetic())
+        let view = MenuBarLabel(store: store)
+            .foregroundStyle(.white)
+            .padding(.horizontal, 10).padding(.vertical, 5)
+            .background(Color(red: 0.13, green: 0.13, blue: 0.15))
+            .fixedSize()
+        let renderer = ImageRenderer(content: view)
+        renderer.scale = 3
+        write(renderer, to: path)
+    }
+
     private static func write(_ renderer: ImageRenderer<some View>, to path: String) {
         guard let image = renderer.nsImage,
               let tiff = image.tiffRepresentation,

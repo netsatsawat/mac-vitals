@@ -32,6 +32,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
         let args = CommandLine.arguments
+        if let i = args.firstIndex(of: "--render-menubar"), i + 1 < args.count {
+            RenderTool.renderMenuBar(to: args[i + 1])
+            NSApp.terminate(nil)
+        }
         if let i = args.firstIndex(of: "--render-popover"), i + 1 < args.count {
             RenderTool.renderPopover(to: args[i + 1])
             NSApp.terminate(nil)
@@ -40,20 +44,51 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             RenderTool.renderMainWindow(to: args[i + 1])
             NSApp.terminate(nil)
         }
+
+        // Drop back to a menu-bar accessory (no Dock icon) once the full window closes.
+        NotificationCenter.default.addObserver(
+            forName: NSWindow.willCloseNotification, object: nil, queue: .main
+        ) { note in
+            MainActor.assumeIsolated {
+                guard let closing = note.object as? NSWindow,
+                      closing.title == "Mac Vitals", !(closing is NSPanel) else { return }
+                DispatchQueue.main.async {
+                    let stillOpen = NSApp.windows.contains {
+                        $0 !== closing && $0.isVisible && $0.title == "Mac Vitals" && !($0 is NSPanel)
+                    }
+                    if !stillOpen { NSApp.setActivationPolicy(.accessory) }
+                }
+            }
+        }
     }
+
+    /// Keep running when the window closes; the app lives in the menu bar.
+    func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool { false }
 }
 
-/// The always-visible menu-bar readout: CPU and GPU percent, kept compact.
+/// The always-visible menu-bar readout: CPU, GPU, memory, and network in/out.
 struct MenuBarLabel: View {
     @ObservedObject var store: SampleStore
     var body: some View {
         let s = store.latest
-        HStack(spacing: 5) {
-            Image(systemName: Sym.cpu)
-            Text("\(Int(s.cpu.usage.rounded()))%")
-            Image(systemName: Sym.gpu)
-            Text("\(Int(s.gpu.usage.rounded()))%")
+        HStack(spacing: 7) {
+            item(Sym.cpu, "\(Int(s.cpu.usage.rounded()))%")
+            item(Sym.gpu, "\(Int(s.gpu.usage.rounded()))%")
+            item(Sym.mem, "\(Int(s.memory.usedPercent.rounded()))%")
+            HStack(spacing: 2) {
+                Image(systemName: "arrow.down").imageScale(.small)
+                Text(Fmt.rateCompact(s.network.downloadBytesPerSec))
+                Image(systemName: "arrow.up").imageScale(.small)
+                Text(Fmt.rateCompact(s.network.uploadBytesPerSec))
+            }
         }
         .monospacedDigit()
+    }
+
+    private func item(_ symbol: String, _ value: String) -> some View {
+        HStack(spacing: 3) {
+            Image(systemName: symbol).imageScale(.small)
+            Text(value)
+        }
     }
 }

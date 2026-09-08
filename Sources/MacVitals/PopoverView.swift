@@ -10,6 +10,7 @@ struct PopoverView: View {
     @Environment(\.openWindow) private var openWindow
 
     private func openMainWindow() {
+        NSApp.setActivationPolicy(.regular) // show the Dock icon while the window is open
         openWindow(id: "main")
         NSApp.activate(ignoringOtherApps: true)
     }

@@ -14,6 +14,13 @@ enum Fmt {
         String(format: "%.1f", Double(bytes) / 1_073_741_824)
     }
 
+    /// A very compact byte rate for the menu bar: "1.2M", "820K", or "0".
+    static func rateCompact(_ bytesPerSec: Double) -> String {
+        if bytesPerSec >= 1_048_576 { return String(format: "%.1fM", bytesPerSec / 1_048_576) }
+        if bytesPerSec >= 1024 { return String(format: "%.0fK", bytesPerSec / 1024) }
+        return "0"
+    }
+
     /// A "nice" upper bound for a chart's y-axis: at least `floor`, otherwise
     /// 20% above the largest value, rounded up to something readable.
     static func niceMax(_ values: [Double], floor: Double) -> Double {
