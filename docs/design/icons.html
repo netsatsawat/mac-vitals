@@ -21,7 +21,7 @@
 </style>
 </head>
 <body>
-<h1>Mac Vitals — icon concepts</h1>
+<h1>Mac Vitals icon concepts</h1>
 <div class="sheet" id="sheet"></div>
 <script>
 const bgGraphite = `<defs>
@@ -48,7 +48,7 @@ function arc(cx, cy, r, a0, a1) {
   return `M ${p0[0].toFixed(2)} ${p0[1].toFixed(2)} A ${r} ${r} 0 ${large} 1 ${p1[0].toFixed(2)} ${p1[1].toFixed(2)}`;
 }
 
-// A — single gauge (speedometer, 270deg, multicolour sweep)
+// A - single gauge (speedometer, 270deg, multicolour sweep)
 const gauge = `<svg viewBox="0 0 100 100">${bgGraphite}
   <defs><linearGradient id="ga" x1="0" y1="1" x2="1" y2="0">
     <stop offset="0" stop-color="#34c759"/><stop offset="0.55" stop-color="#ffcc00"/><stop offset="1" stop-color="#ff3b30"/>
@@ -58,7 +58,7 @@ const gauge = `<svg viewBox="0 0 100 100">${bgGraphite}
   <circle cx="50" cy="50" r="5.5" fill="#f5f5f7"/>
 </svg>`;
 
-// B — pulse / EKG (Activity-Monitor-adjacent, health metaphor)
+// B - pulse / EKG (Activity-Monitor-adjacent, health metaphor)
 const pulse = `<svg viewBox="0 0 100 100">${bgInk}
   <defs><filter id="glow" x="-20%" y="-40%" width="140%" height="180%">
     <feGaussianBlur stdDeviation="1.6" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
@@ -66,7 +66,7 @@ const pulse = `<svg viewBox="0 0 100 100">${bgInk}
     stroke="#34c759" stroke-width="6.5" stroke-linecap="round" stroke-linejoin="round" filter="url(#glow)"/>
 </svg>`;
 
-// C — chip with a pulse through it
+// C - chip with a pulse through it
 const chip = `<svg viewBox="0 0 100 100">${bgGraphite}
   <g stroke="#0a84ff" stroke-width="5" stroke-linecap="round" fill="none">
     <rect x="32" y="32" width="36" height="36" rx="9"/>
@@ -75,7 +75,7 @@ const chip = `<svg viewBox="0 0 100 100">${bgGraphite}
   <path d="M38 52 L45 52 L49 44 L54 60 L58 52 L62 52" fill="none" stroke="#34c759" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>`;
 
-// D — triad of rings (CPU / GPU / memory identity)
+// D - triad of rings (CPU / GPU / memory identity)
 const triad = `<svg viewBox="0 0 100 100">${bgPurple}
   <path d="${arc(50,50,30,140,410)}" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="6.5" stroke-linecap="round"/>
   <path d="${arc(50,50,30,140,320)}" fill="none" stroke="#34c759" stroke-width="6.5" stroke-linecap="round"/>
