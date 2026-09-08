@@ -99,7 +99,7 @@ final class MCPServer {
         [
             [
                 "name": "get_vitals",
-                "description": "One live reading of this Mac's CPU (overall plus efficiency and performance clusters), GPU, memory, and power in watts. Read-only.",
+                "description": "One live reading of this Mac: CPU (overall, the efficiency and performance clusters, and per-core), GPU, memory (used/total and pressure), per-rail power in watts, network up/down bytes per second, disk read/write and free space, battery, and SoC temperature and fan RPM. Read-only.",
                 "inputSchema": ["type": "object", "properties": [String: Any](), "additionalProperties": false],
             ],
             [
