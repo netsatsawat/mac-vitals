@@ -5,12 +5,33 @@ import VitalsCore
 /// the README screenshot without a display. Invoked via `MacVitals --render <path>`.
 @MainActor
 enum RenderTool {
-    static func renderMainWindow(to path: String) {
-        let store = SampleStore(seed: synthetic())
-        let view = MainView(store: store, scrolls: false).frame(width: 840, height: 760)
+    static func renderMainWindow(to path: String, range: HistoryRange = .m15) {
+        let store = SampleStore(seed: synthetic(), minutes: syntheticMinutes(1440))
+        let view = MainView(store: store, scrolls: false, initialRange: range).frame(width: 840, height: 760)
         let renderer = ImageRenderer(content: view)
         renderer.scale = 2
         write(renderer, to: path)
+    }
+
+    /// A day of plausible minute averages, for rendering the long ranges.
+    static func syntheticMinutes(_ n: Int) -> [MinuteSample] {
+        let now = Date()
+        func clamp(_ v: Double) -> Double { max(0, min(100, v)) }
+        return (0..<n).map { i in
+            let f = Double(i)
+            let t = now.addingTimeInterval(Double(i - n) * 60)
+            return MinuteSample(
+                t: t,
+                cpu: clamp(38 + 26 * sin(f / 70) + 10 * sin(f / 13)),
+                gpu: clamp(45 + 32 * sin(f / 90 + 1)),
+                mem: clamp(55 + 8 * sin(f / 150)),
+                watts: max(2, 14 + 9 * sin(f / 80)),
+                netDown: max(0, 3_000_000 + 6_000_000 * (0.5 + 0.5 * sin(f / 40))),
+                netUp: max(0, 300_000 + 400_000 * abs(sin(f / 33))),
+                diskRead: max(0, 12_000_000 * abs(sin(f / 25))),
+                diskWrite: max(0, 6_000_000 * abs(sin(f / 29 + 1)))
+            )
+        }
     }
 
     static func renderPopover(to path: String) {

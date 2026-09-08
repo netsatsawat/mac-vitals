@@ -40,6 +40,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             RenderTool.renderPopover(to: args[i + 1])
             NSApp.terminate(nil)
         }
+        if let i = args.firstIndex(of: "--render24"), i + 1 < args.count {
+            RenderTool.renderMainWindow(to: args[i + 1], range: .h24)
+            NSApp.terminate(nil)
+        }
         if let i = args.firstIndex(of: "--render"), i + 1 < args.count {
             RenderTool.renderMainWindow(to: args[i + 1])
             NSApp.terminate(nil)

@@ -34,7 +34,7 @@ It shows up three ways, over one engine:
 - **Memory** used against total, the way Activity Monitor counts it.
 - **Power** in watts, per rail: CPU and GPU, read from the chip's energy counters.
 - **Network, disk, and battery** too: up and down throughput, read and write activity with free space, and charge.
-- **A full window** with every metric charted over the last minute, fifteen minutes, or hour.
+- **A full window** with every metric charted from the last minute to the last seven days, with history persisted across restarts so the long ranges fill in over time.
 - **No password, ever.** Everything comes through Apple's IOReport interface as a normal user.
 - **Zero dependencies.** One Swift package, no runtime, no helper daemon, no kernel extension.
 - **Light and dark**, following the system, on native vibrancy.
@@ -42,7 +42,7 @@ It shows up three ways, over one engine:
 
 ## The full window
 
-Open it from the popover for every metric charted over a selectable range.
+Open it from the popover for every metric charted over a selectable range, from one minute of live detail up to seven days. Live seconds stay in memory; one-minute averages persist to disk (about a month of them, a few MB), so the long ranges survive quits and fill in as the app runs.
 
 <div align="center">
 <img src="docs/window.png" alt="The Mac Vitals window: CPU, GPU, memory, power, network, and disk charted over the last fifteen minutes" width="840">
@@ -159,7 +159,7 @@ If you want the most features today, `stats` is excellent. Mac Vitals is for peo
 - [x] Menu-bar item and popover
 - [x] Floating widget
 - [x] MCP server
-- [x] Full window with 1 min / 15 min / 1 hour history
+- [x] Full window with history from 1 minute to 7 days, persisted across restarts
 - [x] Network, disk, and battery
 - [ ] Calibrate GPU percent against `powermetrics` on M-series
 - [ ] **Task traces**: bracket a build or a run and get back what it cost (CPU, GPU, watt-hours), in the app and over MCP
