@@ -6,6 +6,11 @@ All notable changes to this project are recorded here. The format follows
 
 ## [Unreleased]
 
+### Added
+- Launch at Login, off by default, in the popover's `⋯` menu, with a one-time
+  opt-in hint on first open. Registered through `SMAppService`, so there is no
+  helper and no privileged step, and the app never starts itself unasked.
+
 ## [0.1.0] - 2026-09-08
 
 First public cut. Everything reads as a normal user, with no `sudo`, no

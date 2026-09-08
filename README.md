@@ -68,6 +68,7 @@ The app lives in the menu bar with no Dock icon. To keep it around, drag `build/
 - **Menu bar:** a compact CPU and GPU readout, refreshed once a second.
 - **Click it** for the popover: CPU, GPU, memory, and power, each with a minute of history.
 - **Show widget** (in the popover) toggles the floating gadget. Drag it anywhere. It floats above other windows and remembers where you left it.
+- **Launch at Login** lives in the `⋯` menu, off until you turn it on. It keeps the app running so the history keeps filling, since nothing is collected while it is quit. A one-time hint on first open offers it, and you can toggle it any time.
 - **Quit** from the popover's `⋯` menu.
 
 ## Command line
@@ -161,8 +162,8 @@ If you want the most features today, `stats` is excellent. Mac Vitals is for peo
 - [x] Calibrate GPU percent against `powermetrics` (M5)
 - [x] Task traces (app, CLI, and MCP)
 - [x] Temperature and fan (SMC)
+- [x] Launch at Login, off by default, with a first-run opt-in
 - [ ] Per-process attribution (what is using the machine)
-- [ ] Launch at login toggle
 - [ ] Notarized release and a Homebrew cask
 
 ## Development

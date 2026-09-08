@@ -9,6 +9,7 @@ struct PopoverView: View {
     var onQuit: () -> Void
     @Environment(\.openWindow) private var openWindow
     @AppStorage("menuBarFull") private var menuBarFull: Bool = true
+    @AppStorage("didPromptLoginItem") private var didPromptLoginItem: Bool = false
 
     private func openMainWindow() {
         NSApp.setActivationPolicy(.regular) // show the Dock icon while the window is open
@@ -20,6 +21,8 @@ struct PopoverView: View {
         let s = store.latest
         VStack(alignment: .leading, spacing: 0) {
             SurfaceHeader().padding(.bottom, 8)
+
+            if !didPromptLoginItem { loginNudge }
 
             MetricRow(name: "CPU", symbol: Sym.cpu, tint: Palette.load(s.cpu.usage),
                       value: "\(Int(s.cpu.usage.rounded()))", unit: "%", bar: s.cpu.usage,
@@ -76,6 +79,41 @@ struct PopoverView: View {
         Rectangle().fill(Palette.hair).frame(height: 0.5)
     }
 
+    /// One-time, dismissible first-run hint. Launch at Login is what lets the
+    /// long ranges fill, since nothing is collected while the app is quit. Opt-in
+    /// only: the app never enables it on its own.
+    private var loginNudge: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Keep Mac Vitals running?")
+                .font(.system(size: 12.5, weight: .semibold)).foregroundStyle(Palette.ink)
+            Text("Launch it at login so your history keeps filling in. Everything stays on your Mac.")
+                .font(.system(size: 11)).foregroundStyle(Palette.ink2)
+                .fixedSize(horizontal: false, vertical: true)
+            HStack(spacing: 8) {
+                Button {
+                    LoginItem.setEnabled(true); didPromptLoginItem = true
+                } label: {
+                    Text("Launch at Login").font(.system(size: 11, weight: .semibold))
+                        .foregroundStyle(.white)
+                        .padding(.vertical, 4).padding(.horizontal, 10)
+                        .background(RoundedRectangle(cornerRadius: 7, style: .continuous).fill(Palette.blue))
+                }
+                .buttonStyle(.plain)
+                Button { didPromptLoginItem = true } label: {
+                    Text("Not now").font(.system(size: 11, weight: .medium)).foregroundStyle(Palette.ink2)
+                        .padding(.vertical, 4).padding(.horizontal, 10)
+                        .background(RoundedRectangle(cornerRadius: 7, style: .continuous).fill(Palette.track))
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .padding(11)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(RoundedRectangle(cornerRadius: 11, style: .continuous).fill(Palette.track.opacity(0.5)))
+        .overlay(RoundedRectangle(cornerRadius: 11, style: .continuous).strokeBorder(Palette.hair, lineWidth: 0.5))
+        .padding(.bottom, 10)
+    }
+
     private func footerButton(_ icon: String, _ label: String, _ action: @escaping () -> Void) -> some View {
         Button(action: action) {
             HStack(spacing: 5) {
@@ -99,6 +137,11 @@ struct PopoverView: View {
             footerButton("square.grid.2x2", "Widget", onToggleWidget)
             footerButton("macwindow", "Open", openMainWindow)
             Menu {
+                Toggle("Launch at Login", isOn: Binding(
+                    get: { LoginItem.isEnabled },
+                    set: { LoginItem.setEnabled($0); didPromptLoginItem = true }
+                ))
+                Divider()
                 Toggle("Full menu-bar readout", isOn: $menuBarFull)
                     .keyboardShortcut("m", modifiers: [.command, .shift])
                 Text(menuBarFull ? "Showing CPU, GPU, memory, network"
