@@ -79,29 +79,55 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool { false }
 }
 
-/// The always-visible menu-bar readout. Built as a single `Text` with inline SF
-/// Symbols, because `MenuBarExtra` renders a multi-view label unreliably (often
-/// only the first element). Compact shows CPU and GPU; full adds memory and
-/// network in/out, toggled from the popover and remembered.
+/// The always-visible menu-bar readout. `MenuBarExtra` renders SwiftUI labels
+/// unreliably in the bar (a multi-view label collapses to its first element, and
+/// SF Symbols interpolated into Text do not draw), so the readout is rendered to
+/// a template NSImage and shown as that image, which the bar tints like any other
+/// item. Compact shows CPU and GPU; full adds memory and network in/out.
 struct MenuBarLabel: View {
     @ObservedObject var store: SampleStore
     @AppStorage("menuBarFull") private var full: Bool = true
 
     var body: some View {
-        readout(store.latest).monospacedDigit()
+        if let image = rendered(store.latest, full: full) {
+            Image(nsImage: image)
+        } else {
+            Text("Vitals")
+        }
     }
 
-    private func readout(_ s: Snapshot) -> Text {
-        let cpu = Int(s.cpu.usage.rounded())
-        let gpu = Int(s.gpu.usage.rounded())
-        var t = Text("\(Image(systemName: Sym.cpu)) \(cpu)%")
-            + Text("  \(Image(systemName: Sym.gpu)) \(gpu)%")
-        if full {
-            let mem = Int(s.memory.usedPercent.rounded())
-            t = t + Text("  \(Image(systemName: Sym.mem)) \(mem)%")
-                + Text("  \(Image(systemName: "arrow.down"))\(Fmt.rateCompact(s.network.downloadBytesPerSec))")
-                + Text(" \(Image(systemName: "arrow.up"))\(Fmt.rateCompact(s.network.uploadBytesPerSec))")
+    private func rendered(_ s: Snapshot, full: Bool) -> NSImage? {
+        let renderer = ImageRenderer(content: readout(s, full: full))
+        renderer.scale = NSScreen.main?.backingScaleFactor ?? 2
+        guard let image = renderer.nsImage else { return nil }
+        image.isTemplate = true // let the menu bar tint it for light/dark
+        return image
+    }
+
+    private func readout(_ s: Snapshot, full: Bool) -> some View {
+        HStack(spacing: 7) {
+            metric(Sym.cpu, "\(Int(s.cpu.usage.rounded()))%")
+            metric(Sym.gpu, "\(Int(s.gpu.usage.rounded()))%")
+            if full {
+                metric(Sym.mem, "\(Int(s.memory.usedPercent.rounded()))%")
+                HStack(spacing: 2) {
+                    Image(systemName: "arrow.down")
+                    Text(Fmt.rateCompact(s.network.downloadBytesPerSec))
+                    Image(systemName: "arrow.up")
+                    Text(Fmt.rateCompact(s.network.uploadBytesPerSec))
+                }
+            }
         }
-        return t
+        .font(.system(size: 12, weight: .regular))
+        .monospacedDigit()
+        .foregroundStyle(.black) // a template image uses only the alpha shape
+        .padding(.vertical, 1)
+    }
+
+    private func metric(_ symbol: String, _ value: String) -> some View {
+        HStack(spacing: 3) {
+            Image(systemName: symbol).imageScale(.small)
+            Text(value)
+        }
     }
 }
