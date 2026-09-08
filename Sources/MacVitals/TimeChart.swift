@@ -135,6 +135,7 @@ struct TimeChart: View {
 
     private var spanLabel: String {
         let s = Int(span)
+        if s >= 350 * 86_400 { return "1y ago" }
         if s >= 86_400 { return "\(s / 86_400)d ago" }
         if s >= 3600 { return "\(s / 3600)h ago" }
         return "\(s / 60)m ago"

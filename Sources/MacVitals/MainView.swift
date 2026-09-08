@@ -2,30 +2,53 @@ import SwiftUI
 import VitalsCore
 
 enum HistoryRange: String, CaseIterable, Identifiable {
-    case m1 = "1m", m15 = "15m", h1 = "1h", h6 = "6h", h24 = "24h", d7 = "7d"
+    case m1 = "1m", m15 = "15m", h1 = "1h", h6 = "6h", h24 = "24h"
+    case d7 = "7d", d15 = "15d", d30 = "30d", d90 = "90d", d180 = "180d", d365 = "365d", ytd = "YTD"
+
     var seconds: TimeInterval {
         switch self {
-        case .m1: 60; case .m15: 900; case .h1: 3600
-        case .h6: 21_600; case .h24: 86_400; case .d7: 604_800
+        case .m1: 60; case .m15: 900; case .h1: 3600; case .h6: 21_600; case .h24: 86_400
+        case .d7: 7 * 86_400; case .d15: 15 * 86_400; case .d30: 30 * 86_400
+        case .d90: 90 * 86_400; case .d180: 180 * 86_400; case .d365: 365 * 86_400
+        case .ytd: max(3600, Date().timeIntervalSince(Self.startOfYear))
         }
     }
-    /// Ranges past an hour read the persisted minute samples; shorter ranges use
-    /// the live 1-second history.
-    var usesMinutes: Bool { seconds > 3600 }
+
+    enum Tier { case live, minutes, hours }
+    /// Which stored resolution answers this range.
+    var tier: Tier {
+        if seconds <= 3600 { return .live }
+        if seconds <= 7 * 86_400 { return .minutes }
+        return .hours
+    }
+
+    var name: String {
+        switch self {
+        case .m1: "1 minute"; case .m15: "15 minutes"; case .h1: "1 hour"; case .h6: "6 hours"
+        case .h24: "24 hours"; case .d7: "7 days"; case .d15: "15 days"; case .d30: "30 days"
+        case .d90: "90 days"; case .d180: "180 days"; case .d365: "365 days"; case .ytd: "Year to date"
+        }
+    }
+
     var id: String { rawValue }
+    static var startOfYear: Date {
+        let c = Calendar.current
+        return c.date(from: c.dateComponents([.year], from: Date())) ?? Date()
+    }
 }
 
 /// The full window: every metric as a time-series chart over a selectable range,
-/// from one minute of live detail to seven days of persisted history.
+/// from one minute of live detail to a full year of persisted history.
 struct MainView: View {
     @ObservedObject var store: SampleStore
     @State private var range: HistoryRange
+    @State private var rangeMenu = false
     var scrolls: Bool
 
     private let readTeal = Palette.teal
     private let writeOrange = Palette.orange
 
-    init(store: SampleStore, scrolls: Bool = true, initialRange: HistoryRange = .m15) {
+    init(store: SampleStore, scrolls: Bool = true, initialRange: HistoryRange = .h24) {
         _store = ObservedObject(wrappedValue: store)
         self.scrolls = scrolls
         _range = State(initialValue: initialRange)
@@ -67,25 +90,40 @@ struct MainView: View {
     }
 
     private var rangeControl: some View {
-        HStack(spacing: 2) {
-            ForEach(HistoryRange.allCases) { r in
-                Text(r.rawValue)
-                    .font(.system(size: 11, weight: .medium))
-                    .foregroundStyle(range == r ? Palette.ink : Palette.ink2)
-                    .padding(.vertical, 4).padding(.horizontal, 9)
-                    .background {
-                        if range == r {
-                            RoundedRectangle(cornerRadius: 6, style: .continuous)
-                                .fill(Color(nsColor: .controlBackgroundColor))
-                                .shadow(color: .black.opacity(0.12), radius: 1, y: 0.5)
-                        }
-                    }
-                    .contentShape(Rectangle())
-                    .onTapGesture { range = r }
+        Button { rangeMenu.toggle() } label: {
+            HStack(spacing: 6) {
+                Text(range.rawValue).font(.system(size: 11, weight: .semibold)).foregroundStyle(Palette.ink)
+                Image(systemName: "chevron.down").font(.system(size: 8, weight: .bold)).foregroundStyle(Palette.ink2)
             }
+            .frame(minWidth: 40)
+            .padding(.vertical, 4).padding(.horizontal, 10)
+            .background(RoundedRectangle(cornerRadius: 7, style: .continuous).fill(Palette.track))
         }
-        .padding(2)
-        .background(RoundedRectangle(cornerRadius: 8, style: .continuous).fill(Palette.track))
+        .buttonStyle(.plain)
+        .popover(isPresented: $rangeMenu, arrowEdge: .bottom) {
+            VStack(alignment: .leading, spacing: 1) {
+                ForEach(HistoryRange.allCases) { r in
+                    Button {
+                        range = r; rangeMenu = false
+                    } label: {
+                        HStack(spacing: 10) {
+                            Text(r.name).font(.system(size: 12))
+                            Spacer()
+                            if r == range {
+                                Image(systemName: "checkmark").font(.system(size: 10, weight: .semibold))
+                                    .foregroundStyle(Palette.blue)
+                            }
+                        }
+                        .foregroundStyle(Palette.ink)
+                        .padding(.vertical, 5).padding(.horizontal, 10)
+                        .frame(width: 156, alignment: .leading)
+                        .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+            .padding(6)
+        }
     }
 
     @ViewBuilder private var batteryPill: some View {
@@ -104,15 +142,18 @@ struct MainView: View {
 
     // MARK: - Data
 
-    /// Points for a metric over the current range, from the right source and
+    /// Points for a metric over the current range, from the right storage tier and
     /// thinned so a long window does not draw tens of thousands of points.
     private func series(_ metric: Metric) -> [(date: Date, value: Double)] {
         let cutoff = Date().addingTimeInterval(-range.seconds)
         let raw: [(Date, Double)]
-        if range.usesMinutes {
-            raw = store.minutes.filter { $0.t >= cutoff }.map { ($0.t, metric.value($0)) }
-        } else {
+        switch range.tier {
+        case .live:
             raw = store.history.filter { $0.timestamp >= cutoff }.map { ($0.timestamp, metric.value($0)) }
+        case .minutes:
+            raw = store.minutes.filter { $0.t >= cutoff }.map { ($0.t, metric.value($0)) }
+        case .hours:
+            raw = store.hours.filter { $0.t >= cutoff }.map { ($0.t, metric.value($0)) }
         }
         return downsample(raw)
     }

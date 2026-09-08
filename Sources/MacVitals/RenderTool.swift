@@ -5,21 +5,24 @@ import VitalsCore
 /// the README screenshot without a display. Invoked via `MacVitals --render <path>`.
 @MainActor
 enum RenderTool {
-    static func renderMainWindow(to path: String, range: HistoryRange = .m15) {
-        let store = SampleStore(seed: synthetic(), minutes: syntheticMinutes(1440))
+    static func renderMainWindow(to path: String, range: HistoryRange = .h24) {
+        let store = SampleStore(seed: synthetic(),
+                                minutes: syntheticSamples(1440, step: 60),
+                                hours: syntheticSamples(370 * 24, step: 3600))
         let view = MainView(store: store, scrolls: false, initialRange: range).frame(width: 840, height: 760)
         let renderer = ImageRenderer(content: view)
         renderer.scale = 2
         write(renderer, to: path)
     }
 
-    /// A day of plausible minute averages, for rendering the long ranges.
-    static func syntheticMinutes(_ n: Int) -> [MinuteSample] {
+    /// Plausible aggregated samples spaced `step` seconds apart, for rendering the
+    /// minute and hour tiers behind the long ranges.
+    static func syntheticSamples(_ n: Int, step: Double) -> [MinuteSample] {
         let now = Date()
         func clamp(_ v: Double) -> Double { max(0, min(100, v)) }
         return (0..<n).map { i in
             let f = Double(i)
-            let t = now.addingTimeInterval(Double(i - n) * 60)
+            let t = now.addingTimeInterval(Double(i - n) * step)
             return MinuteSample(
                 t: t,
                 cpu: clamp(38 + 26 * sin(f / 70) + 10 * sin(f / 13)),

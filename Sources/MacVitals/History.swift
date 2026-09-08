@@ -1,9 +1,9 @@
 import Foundation
 import VitalsCore
 
-/// One minute's average of each metric. Persisted so the long ranges (hours,
-/// days) survive quits and reboots and fill in over time, the way iStat Menus
-/// does it. Live 1-second detail stays in memory for the short ranges.
+/// One aggregated point (a minute's or an hour's average of each metric).
+/// Persisted so the long ranges survive quits and fill in over time. Live
+/// 1-second detail stays in memory for the short ranges.
 struct MinuteSample: Codable {
     var t: Date
     var cpu: Double
@@ -35,10 +35,19 @@ struct MinuteSample: Codable {
         diskRead = avg { $0.disk.readBytesPerSec }
         diskWrite = avg { $0.disk.writeBytesPerSec }
     }
+
+    /// Roll a set of minute samples up into one coarser (hourly) point.
+    init(rollingUp samples: [MinuteSample]) {
+        let n = Double(max(samples.count, 1))
+        func avg(_ f: (MinuteSample) -> Double) -> Double { samples.reduce(0) { $0 + f($1) } / n }
+        t = samples.last?.t ?? Date()
+        cpu = avg(\.cpu); gpu = avg(\.gpu); mem = avg(\.mem); watts = avg(\.watts)
+        netDown = avg(\.netDown); netUp = avg(\.netUp); diskRead = avg(\.diskRead); diskWrite = avg(\.diskWrite)
+    }
 }
 
 /// The metrics a chart can plot, with one extractor per data source so the same
-/// chart reads live snapshots for short ranges and minute samples for long ones.
+/// chart reads live snapshots for short ranges and aggregated samples for long ones.
 enum Metric {
     case cpu, gpu, memory, power, netDown, netUp, diskRead, diskWrite
 
@@ -69,18 +78,19 @@ enum Metric {
     }
 }
 
-/// Append-only NDJSON persistence of minute samples under Application Support.
-/// Loads on launch, appends one line a minute, and prunes to the retention window.
+/// Append-only NDJSON persistence for one resolution tier (minutes or hours).
+/// Loads on launch, appends one line per new sample, and prunes to its retention.
 final class HistoryStore {
     private let url: URL
-    private let retentionMinutes = 30 * 24 * 60 // 30 days
-    private(set) var minutes: [MinuteSample] = []
+    private let retention: Int
+    private(set) var samples: [MinuteSample] = []
 
-    init() {
+    init(filename: String, retention: Int) {
+        self.retention = retention
         let base = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
             .appendingPathComponent("MacVitals", isDirectory: true)
         try? FileManager.default.createDirectory(at: base, withIntermediateDirectories: true)
-        url = base.appendingPathComponent("minutes.ndjson")
+        url = base.appendingPathComponent(filename)
         load()
     }
 
@@ -100,18 +110,18 @@ final class HistoryStore {
                 parsed.append(m)
             }
         }
-        if parsed.count > retentionMinutes {
-            parsed = Array(parsed.suffix(retentionMinutes))
-            rewrite(parsed) // compact the file back down
+        if parsed.count > retention {
+            parsed = Array(parsed.suffix(retention))
+            rewrite(parsed)
         }
-        minutes = parsed
+        samples = parsed
     }
 
     func append(_ m: MinuteSample) {
-        minutes.append(m)
-        if minutes.count > retentionMinutes {
-            minutes.removeFirst(minutes.count - retentionMinutes)
-            rewrite(minutes)
+        samples.append(m)
+        if samples.count > retention {
+            samples.removeFirst(samples.count - retention)
+            rewrite(samples)
             return
         }
         guard let data = try? encoder().encode(m) else { return }
@@ -122,7 +132,7 @@ final class HistoryStore {
             _ = try? handle.seekToEnd()
             try? handle.write(contentsOf: line)
         } else {
-            try? line.write(to: url) // first write creates the file
+            try? line.write(to: url)
         }
     }
 
