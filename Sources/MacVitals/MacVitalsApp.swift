@@ -5,12 +5,20 @@ import VitalsCore
 struct MacVitalsApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) private var delegate
     @StateObject private var store = SampleStore()
+    // When on, the app keeps running and recording with no menu-bar icon.
+    // Reopening the app clears it (the AppDelegate's reopen handler), which is
+    // how the icon comes back.
+    @AppStorage("runInBackground") private var runInBackground = false
 
     var body: some Scene {
-        MenuBarExtra {
+        MenuBarExtra(isInserted: Binding(
+            get: { !runInBackground },
+            set: { runInBackground = !$0 }
+        )) {
             PopoverView(
                 store: store,
                 onToggleWidget: { delegate.panel.toggle(store: store) },
+                onRunInBackground: { delegate.enterBackgroundMode() },
                 onQuit: { NSApp.terminate(nil) }
             )
         } label: {
@@ -94,6 +102,38 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     /// Keep running when the window closes; the app lives in the menu bar.
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool { false }
+
+    /// Reopening the app is how the user gets the menu-bar icon back after
+    /// hiding it. The app is still running in the background, so a second open
+    /// lands here rather than starting a new process.
+    func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
+        UserDefaults.standard.set(false, forKey: "runInBackground")
+        return true
+    }
+
+    /// Explain background mode plainly, then hide the menu-bar icon if the user
+    /// agrees. The app keeps sampling and persisting with no icon; reopening it
+    /// brings the icon back.
+    func enterBackgroundMode() {
+        let alert = NSAlert()
+        alert.messageText = "Run Mac Vitals in the background?"
+        alert.informativeText = """
+        Mac Vitals keeps running and recording with no menu-bar icon. Its history keeps filling, so your longer ranges stay complete.
+
+        Everything stays on your Mac. Nothing is sent anywhere, there is no account, and there is no telemetry. The cost is small, one read of the sensors a second.
+
+        To bring it back, open Mac Vitals again from Spotlight or your Applications folder and the menu-bar icon returns. From there you can open the window or quit.
+
+        This pairs with Launch at Login. Together they make a quiet, always-on recorder that starts with your Mac and stays out of the way.
+        """
+        alert.alertStyle = .informational
+        alert.addButton(withTitle: "Run in Background")
+        alert.addButton(withTitle: "Cancel")
+        NSApp.activate(ignoringOtherApps: true)
+        if alert.runModal() == .alertFirstButtonReturn {
+            UserDefaults.standard.set(true, forKey: "runInBackground")
+        }
+    }
 }
 
 /// The always-visible menu-bar readout. `MenuBarExtra` renders SwiftUI labels

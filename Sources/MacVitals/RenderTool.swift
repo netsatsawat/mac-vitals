@@ -52,7 +52,7 @@ enum RenderTool {
 
     static func renderPopover(to path: String) {
         let store = SampleStore(seed: synthetic())
-        let view = PopoverView(store: store, onToggleWidget: {}, onQuit: {}).fixedSize()
+        let view = PopoverView(store: store, onToggleWidget: {}, onRunInBackground: {}, onQuit: {}).fixedSize()
         let renderer = ImageRenderer(content: view)
         renderer.scale = 2
         write(renderer, to: path)

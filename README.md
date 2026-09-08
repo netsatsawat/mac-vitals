@@ -71,6 +71,7 @@ New here? The [full walkthrough](docs/WALKTHROUGH.md) tours every surface from i
 - **Click it** for the popover: CPU, GPU, memory, and power, each with a minute of history.
 - **Show widget** (in the popover) toggles the floating gadget. Drag it anywhere. It floats above other windows and remembers where you left it.
 - **Launch at Login** lives in the `⋯` menu, off until you turn it on. It keeps the app running so the history keeps filling, since nothing is collected while it is quit. A one-time hint on first open offers it, and you can toggle it any time.
+- **Run in Background** (in the `⋯` menu) hides the menu-bar icon and keeps recording with no icon in your way. It explains what that means before it does anything. To bring the icon back, open Mac Vitals again. Paired with Launch at Login, it is a quiet always-on recorder.
 - **Quit** from the popover's `⋯` menu.
 
 ## Command line

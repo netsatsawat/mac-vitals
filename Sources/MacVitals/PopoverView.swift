@@ -6,6 +6,7 @@ import VitalsCore
 struct PopoverView: View {
     @ObservedObject var store: SampleStore
     var onToggleWidget: () -> Void
+    var onRunInBackground: () -> Void
     var onQuit: () -> Void
     @Environment(\.openWindow) private var openWindow
     @AppStorage("menuBarFull") private var menuBarFull: Bool = true
@@ -141,6 +142,7 @@ struct PopoverView: View {
                     get: { LoginItem.isEnabled },
                     set: { LoginItem.setEnabled($0); didPromptLoginItem = true }
                 ))
+                Button("Run in Background…", action: onRunInBackground)
                 Divider()
                 Toggle("Full menu-bar readout", isOn: $menuBarFull)
                     .keyboardShortcut("m", modifiers: [.command, .shift])
