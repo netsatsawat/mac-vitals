@@ -6,3 +6,4 @@ build/
 *.app
 scripts/calibrate/gpucal
 scripts/calibrate/gpuload
+.impeccable/
