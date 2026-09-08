@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mac Vitals social preview</title>
+<style>
+  :root {
+    font-family: -apple-system, "SF Pro Text", "SF Pro Display", system-ui, sans-serif;
+    --num: "SF Mono", ui-monospace, "SF Pro Text", monospace;
+    --ink: #f5f5f7; --ink2: rgba(235,235,245,.66); --ink3: rgba(235,235,245,.42);
+    --track: rgba(255,255,255,.11); --hair: rgba(255,255,255,.09); --blue: #0a84ff;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 1280px; height: 640px; overflow: hidden; }
+  body {
+    background: radial-gradient(120% 90% at 12% 4%, #3d2e72 0%, #241c4a 38%, #141127 72%, #0c0a16 100%);
+    color: var(--ink); -webkit-font-smoothing: antialiased;
+    display: flex; flex-direction: column;
+  }
+
+  /* faux menu bar, so it reads as a menu-bar app at a glance */
+  .menubar {
+    height: 34px; flex: none; display: flex; align-items: center; gap: 20px;
+    padding: 0 22px; font-size: 13.5px; font-weight: 500; color: #f5f5f7;
+    background: rgba(24,24,28,.5); box-shadow: inset 0 -.5px 0 rgba(255,255,255,.10);
+    backdrop-filter: blur(24px);
+  }
+  .menubar .apple { font-size: 15px; }
+  .menubar .name { font-weight: 600; }
+  .menubar .spacer { flex: 1; }
+  .menubar .mb-vit { display: flex; align-items: center; gap: 12px;
+    background: rgba(120,120,140,.22); padding: 4px 10px; border-radius: 7px; }
+  .menubar .mb-vit .m { display: flex; align-items: center; gap: 5px; font-weight: 600; }
+  .menubar .mb-vit .m svg { width: 14px; height: 14px; opacity: .85; }
+  .menubar .mb-vit .m .v { font-family: var(--num); font-size: 12.5px; letter-spacing: -.02em; }
+  .menubar .clock { font-variant-numeric: tabular-nums; opacity: .92; }
+
+  .stage { flex: 1; display: flex; align-items: center; gap: 56px; padding: 0 64px; }
+
+  /* left: the pitch */
+  .pitch { width: 640px; flex: none; }
+  .brand { display: flex; align-items: center; gap: 16px; margin-bottom: 26px; }
+  .brand .mark { width: 60px; height: 60px; }
+  .brand .word { font-size: 52px; font-weight: 700; letter-spacing: -.025em; color: var(--ink); }
+  .headline { font-size: 33px; font-weight: 600; line-height: 1.16; letter-spacing: -.02em;
+    color: var(--ink); max-width: 600px; }
+  .headline b { color: #34c759; font-weight: 600; }
+  .sub { margin-top: 18px; font-size: 18.5px; line-height: 1.5; color: var(--ink2); max-width: 560px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 30px; }
+  .chip { display: flex; align-items: center; gap: 7px; font-size: 14.5px; font-weight: 600;
+    color: var(--ink); padding: 8px 14px; border-radius: 999px;
+    background: rgba(255,255,255,.07); box-shadow: inset 0 0 0 .5px rgba(255,255,255,.12); }
+  .chip i { width: 8px; height: 8px; border-radius: 50%; }
+
+  /* right: the real product surface */
+  .surface {
+    width: 400px; flex: none; border-radius: 26px; padding: 26px 26px 22px;
+    background: rgba(32,32,36,.62); backdrop-filter: blur(34px) saturate(1.7);
+    box-shadow: 0 30px 64px -20px rgba(0,0,0,.66), 0 6px 18px -6px rgba(0,0,0,.45),
+      inset 0 .5px 0 rgba(255,255,255,.15), inset 0 0 0 .5px rgba(255,255,255,.07);
+  }
+  .head { display: flex; align-items: center; gap: 10px; margin-bottom: 22px; }
+  .head .mark { width: 22px; height: 22px; color: var(--ink); opacity: .92; }
+  .head h1 { font-size: 16px; font-weight: 600; letter-spacing: -.01em; }
+  .head .live { margin-left: auto; display: flex; align-items: center; gap: 6px;
+    font-size: 12px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: var(--ink3); }
+  .head .live i { width: 7px; height: 7px; border-radius: 50%; background: #34c759;
+    box-shadow: 0 0 0 3px rgba(52,199,89,.18); }
+
+  .rings { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .gauge { display: flex; flex-direction: column; align-items: center; gap: 11px; }
+  .ring { position: relative; width: 96px; height: 96px; }
+  .ring svg { transform: rotate(-90deg); display: block; }
+  .ring .cap { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; }
+  .ring .cap .pct { font-family: var(--num); font-size: 23px; font-weight: 600;
+    letter-spacing: -.03em; color: var(--ink); font-variant-numeric: tabular-nums; }
+  .ring .cap .pct u { font-size: 12px; font-weight: 600; opacity: .5; text-decoration: none; }
+  .gauge .lbl { display: flex; align-items: center; gap: 6px; font-size: 13.5px; font-weight: 600; color: var(--ink2); }
+  .gauge .lbl svg { width: 15px; height: 15px; }
+  .gauge .subl { font-family: var(--num); font-size: 11px; color: var(--ink3);
+    font-variant-numeric: tabular-nums; }
+
+  .foot { margin-top: 22px; padding-top: 18px; border-top: .5px solid var(--hair);
+    display: flex; align-items: center; gap: 11px; }
+  .foot .mark { width: 19px; height: 19px; color: var(--ink); opacity: .72; flex: none; }
+  .foot .w { font-family: var(--num); font-size: 27px; font-weight: 600; letter-spacing: -.03em;
+    color: var(--ink); font-variant-numeric: tabular-nums; }
+  .foot .w u { font-size: 14px; opacity: .5; text-decoration: none; font-weight: 600; margin-left: 1px; }
+  .foot .split { margin-left: auto; display: flex; gap: 16px; }
+  .foot .split span { font-size: 13.5px; color: var(--ink2); }
+  .foot .split b { font-family: var(--num); color: var(--ink); font-weight: 600; margin-left: 5px;
+    font-variant-numeric: tabular-nums; }
+</style>
+</head>
+<body>
+  <div class="menubar">
+    <span class="apple"></span>
+    <span class="name">Mac Vitals</span><span>View</span><span>Window</span><span>Help</span>
+    <span class="spacer"></span>
+    <span class="mb-vit" id="mbvit"></span>
+    <span class="clock">Mon 9:41 AM</span>
+  </div>
+  <div class="stage">
+    <div class="pitch">
+      <div class="brand"><span class="mark" id="brandmark"></span><span class="word">Mac Vitals</span></div>
+      <div class="headline">CPU, GPU, memory, and power, <b>one glance away</b> on Apple Silicon.</div>
+      <div class="sub">A native menu-bar monitor with a floating widget. No password, no dependencies, and the same engine speaks MCP, so your coding agent can read the machine too.</div>
+      <div class="chips" id="chips"></div>
+    </div>
+    <div class="surface" id="surface"></div>
+  </div>
+
+<script>
+const data = {
+  cpu: { usage: 42, e: 18, p: 66 },
+  gpu: { usage: 71 },
+  mem: { usedGB: 14.2, totalGB: 24, pct: 59 },
+  pwr: { total: 21.1, cpu: 11.3, gpu: 9.8 }
+};
+
+function loadColor(p){
+  const stops = [[0,[52,199,89]],[55,[52,199,89]],[70,[255,204,0]],[85,[255,149,0]],[100,[255,59,48]]];
+  for(let i=0;i<stops.length-1;i++){
+    const [a,ca]=stops[i], [b,cb]=stops[i+1];
+    if(p<=b){ const t=(p-a)/(b-a||1); const c=ca.map((v,k)=>Math.round(v+(cb[k]-v)*t)); return `rgb(${c[0]},${c[1]},${c[2]})`; }
+  }
+  return 'rgb(255,59,48)';
+}
+function ring(pct, color, size=96, sw=9){
+  const r=(size-sw)/2, C=2*Math.PI*r, dash=Math.max(0,Math.min(100,pct))/100*C;
+  return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
+    <circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="var(--track)" stroke-width="${sw}"/>
+    <circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="${color}" stroke-width="${sw}"
+      stroke-linecap="round" stroke-dasharray="${dash} ${C-dash}"/></svg>`;
+}
+const I = {
+  gauge:`<svg viewBox="0 0 24 24" fill="none"><defs><linearGradient id="gmgrad" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#34c759"/><stop offset=".55" stop-color="#ffcc00"/><stop offset="1" stop-color="#ff3b30"/></linearGradient></defs><g transform="rotate(135 12 12)"><circle cx="12" cy="12" r="7.5" stroke="currentColor" stroke-opacity="0.16" stroke-width="3.2" stroke-linecap="round" stroke-dasharray="35.3 11.8"/><circle cx="12" cy="12" r="7.5" stroke="url(#gmgrad)" stroke-width="3.2" stroke-linecap="round" stroke-dasharray="26.4 20.7"/></g><circle cx="12" cy="12" r="1.7" fill="currentColor"/></svg>`,
+  cpu:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="7" width="10" height="10" rx="2.4"/><path d="M10 2v3M14 2v3M10 19v3M14 19v3M2 10h3M2 14h3M19 10h3M19 14h3"/></svg>`,
+  gpu:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="6" width="19" height="12" rx="2.6"/><circle cx="9" cy="12" r="2.6"/><path d="M15 10.5h4M15 13.5h4"/></svg>`,
+  mem:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="9" rx="1.8"/><path d="M6.5 8V5.5M11 8V5.5M15.5 8V5.5M7 12v2M12 12v2M17 12v2"/></svg>`,
+  bolt:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 4 14h7l-1 8 9-12h-7l1-8Z"/></svg>`
+};
+function pctHTML(v){ return `${Math.round(v)}<u>%</u>`; }
+
+const d = data;
+const cpuC=loadColor(d.cpu.usage), gpuC=loadColor(d.gpu.usage);
+
+document.getElementById('brandmark').innerHTML = I.gauge;
+document.getElementById('mbvit').innerHTML =
+  `<span class="m">${I.cpu}<span class="v">${d.cpu.usage}%</span></span>
+   <span class="m">${I.gpu}<span class="v">${d.gpu.usage}%</span></span>`;
+
+document.getElementById('chips').innerHTML = [
+  `<span class="chip"><i style="background:#34c759"></i>No sudo</span>`,
+  `<span class="chip"><i style="background:#0a84ff"></i>Zero dependencies</span>`,
+  `<span class="chip"><i style="background:#ffcc00"></i>MCP for agents</span>`,
+  `<span class="chip"><i style="background:#bf5af2"></i>Menu bar + widget</span>`
+].join('');
+
+document.getElementById('surface').innerHTML = `
+  <div class="head"><span class="mark">${I.gauge}</span><h1>Mac Vitals</h1><span class="live"><i></i>Live</span></div>
+  <div class="rings">
+    <div class="gauge"><div class="ring">${ring(d.cpu.usage,cpuC)}<div class="cap"><span class="pct">${pctHTML(d.cpu.usage)}</span></div></div>
+      <div class="lbl">${I.cpu} CPU</div><div class="subl">E ${d.cpu.e} · P ${d.cpu.p}</div></div>
+    <div class="gauge"><div class="ring">${ring(d.gpu.usage,gpuC)}<div class="cap"><span class="pct">${pctHTML(d.gpu.usage)}</span></div></div>
+      <div class="lbl">${I.gpu} GPU</div><div class="subl">calibrated</div></div>
+    <div class="gauge"><div class="ring">${ring(d.mem.pct,'var(--blue)')}<div class="cap"><span class="pct">${pctHTML(d.mem.pct)}</span></div></div>
+      <div class="lbl">${I.mem} Memory</div><div class="subl">${d.mem.usedGB} / ${d.mem.totalGB} GB</div></div>
+  </div>
+  <div class="foot"><span class="mark">${I.bolt}</span><span class="w">${d.pwr.total.toFixed(1)}<u>W</u></span>
+    <span class="split"><span>CPU<b>${d.pwr.cpu.toFixed(1)}</b></span><span>GPU<b>${d.pwr.gpu.toFixed(1)}</b></span></span></div>`;
+</script>
+</body>
+</html>

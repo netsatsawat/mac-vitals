@@ -7,6 +7,7 @@
 **A live CPU, GPU, memory, and power monitor for Apple Silicon.**
 No password. No dependencies. And the same engine speaks MCP, so your coding agent can read the machine too.
 
+[![CI](https://github.com/netsatsawat/mac-vitals/actions/workflows/ci.yml/badge.svg)](https://github.com/netsatsawat/mac-vitals/actions/workflows/ci.yml)
 ![Platform](https://img.shields.io/badge/macOS-14%2B-black?logo=apple)
 ![Apple Silicon](https://img.shields.io/badge/Apple%20Silicon-M1--M5-0a84ff)
 ![Swift](https://img.shields.io/badge/Swift-6-f05138?logo=swift&logoColor=white)

@@ -1,0 +1,56 @@
+name: Bug report
+description: Something read wrong, crashed, or did not behave as documented.
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: Thanks for taking the time to file this. A clear report is the fastest path to a fix.
+  - type: input
+    id: mac
+    attributes:
+      label: Mac and chip
+      description: The model and Apple Silicon generation.
+      placeholder: MacBook Pro, M5 Pro
+    validations:
+      required: true
+  - type: input
+    id: macos
+    attributes:
+      label: macOS version
+      placeholder: 15.1
+    validations:
+      required: true
+  - type: dropdown
+    id: surface
+    attributes:
+      label: Where it happened
+      options:
+        - Menu-bar item
+        - Popover
+        - Floating widget
+        - Full window
+        - CLI (vitals)
+        - MCP server
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What you saw, and what you expected instead.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Open the full window
+        2. Pick the 30-day range
+        3. ...
+  - type: textarea
+    id: selftest
+    attributes:
+      label: Self-test output
+      description: The output of `.build/release/vitals --selftest`, if you can run it. This is auto-formatted, no backticks needed.
+      render: shell
