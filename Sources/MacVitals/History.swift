@@ -14,11 +14,16 @@ struct MinuteSample: Codable {
     var netUp: Double
     var diskRead: Double
     var diskWrite: Double
+    // Optional so history files written before these existed still decode.
+    var temp: Double?
+    var fan: Double?
 
     init(t: Date, cpu: Double, gpu: Double, mem: Double, watts: Double,
-         netDown: Double, netUp: Double, diskRead: Double, diskWrite: Double) {
+         netDown: Double, netUp: Double, diskRead: Double, diskWrite: Double,
+         temp: Double? = nil, fan: Double? = nil) {
         self.t = t; self.cpu = cpu; self.gpu = gpu; self.mem = mem; self.watts = watts
         self.netDown = netDown; self.netUp = netUp; self.diskRead = diskRead; self.diskWrite = diskWrite
+        self.temp = temp; self.fan = fan
     }
 
     /// Average a minute of 1-second snapshots into one persisted point.
@@ -34,6 +39,8 @@ struct MinuteSample: Codable {
         netUp = avg { $0.network.uploadBytesPerSec }
         diskRead = avg { $0.disk.readBytesPerSec }
         diskWrite = avg { $0.disk.writeBytesPerSec }
+        temp = avg { $0.thermal.socTempC }
+        fan = avg { Double($0.thermal.fanRPM) }
     }
 
     /// Roll a set of minute samples up into one coarser (hourly) point.
@@ -43,13 +50,14 @@ struct MinuteSample: Codable {
         t = samples.last?.t ?? Date()
         cpu = avg(\.cpu); gpu = avg(\.gpu); mem = avg(\.mem); watts = avg(\.watts)
         netDown = avg(\.netDown); netUp = avg(\.netUp); diskRead = avg(\.diskRead); diskWrite = avg(\.diskWrite)
+        temp = avg { $0.temp ?? 0 }; fan = avg { $0.fan ?? 0 }
     }
 }
 
 /// The metrics a chart can plot, with one extractor per data source so the same
 /// chart reads live snapshots for short ranges and aggregated samples for long ones.
 enum Metric {
-    case cpu, gpu, memory, power, netDown, netUp, diskRead, diskWrite
+    case cpu, gpu, memory, power, netDown, netUp, diskRead, diskWrite, temperature, fanRPM
 
     func value(_ s: Snapshot) -> Double {
         switch self {
@@ -61,6 +69,8 @@ enum Metric {
         case .netUp: s.network.uploadBytesPerSec
         case .diskRead: s.disk.readBytesPerSec
         case .diskWrite: s.disk.writeBytesPerSec
+        case .temperature: s.thermal.socTempC
+        case .fanRPM: Double(s.thermal.fanRPM)
         }
     }
 
@@ -74,6 +84,8 @@ enum Metric {
         case .netUp: m.netUp
         case .diskRead: m.diskRead
         case .diskWrite: m.diskWrite
+        case .temperature: m.temp ?? 0
+        case .fanRPM: m.fan ?? 0
         }
     }
 }

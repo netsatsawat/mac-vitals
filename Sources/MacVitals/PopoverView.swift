@@ -56,6 +56,14 @@ struct PopoverView: View {
                           value: "\(Int(s.battery.percent))", unit: "%", bar: s.battery.percent,
                           sub: s.battery.isCharging ? "charging" : "on battery", history: nil)
             }
+            if s.thermal.available {
+                divider
+                MetricRow(name: "Temperature", symbol: "thermometer.medium",
+                          tint: Palette.load(s.thermal.socTempC),
+                          value: String(format: "%.0f", s.thermal.socTempC), unit: "°C", bar: nil,
+                          sub: s.thermal.fanPresent ? "fan \(s.thermal.fanRPM) rpm" : "SoC die average",
+                          history: nil)
+            }
 
             footer
         }

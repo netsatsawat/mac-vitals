@@ -11,11 +11,14 @@ public struct Snapshot: Codable, Sendable {
     public var network: NetworkSnapshot
     public var disk: DiskSnapshot
     public var battery: BatterySnapshot
+    public var thermal: ThermalSnapshot
 
     public init(timestamp: Date, cpu: CPUSnapshot, gpu: GPUSnapshot, memory: MemorySnapshot,
-                power: PowerSnapshot, network: NetworkSnapshot, disk: DiskSnapshot, battery: BatterySnapshot) {
+                power: PowerSnapshot, network: NetworkSnapshot, disk: DiskSnapshot,
+                battery: BatterySnapshot, thermal: ThermalSnapshot) {
         self.timestamp = timestamp; self.cpu = cpu; self.gpu = gpu; self.memory = memory
         self.power = power; self.network = network; self.disk = disk; self.battery = battery
+        self.thermal = thermal
     }
 }
 
@@ -120,6 +123,22 @@ public struct BatterySnapshot: Codable, Sendable {
     }
 }
 
+public struct ThermalSnapshot: Codable, Sendable {
+    /// Whether the SMC gave a usable reading.
+    public var available: Bool
+    /// Average of the on-die temperature sensors, in Celsius.
+    public var socTempC: Double
+    /// Fastest fan's speed in RPM (0 when fans are idle).
+    public var fanRPM: Int
+    /// Whether this machine has fans at all.
+    public var fanPresent: Bool
+
+    public init(available: Bool, socTempC: Double, fanRPM: Int, fanPresent: Bool) {
+        self.available = available; self.socTempC = socTempC
+        self.fanRPM = fanRPM; self.fanPresent = fanPresent
+    }
+}
+
 public extension Snapshot {
     /// A zeroed reading for a view's initial state, before the first real sample lands.
     static var placeholder: Snapshot {
@@ -133,7 +152,8 @@ public extension Snapshot {
             power: PowerSnapshot(cpuWatts: 0, gpuWatts: 0, totalWatts: 0, available: false),
             network: NetworkSnapshot(uploadBytesPerSec: 0, downloadBytesPerSec: 0),
             disk: DiskSnapshot(readBytesPerSec: 0, writeBytesPerSec: 0, freeBytes: 0, totalBytes: 0),
-            battery: BatterySnapshot(present: false, percent: 0, isCharging: false, minutesRemaining: nil)
+            battery: BatterySnapshot(present: false, percent: 0, isCharging: false, minutesRemaining: nil),
+            thermal: ThermalSnapshot(available: false, socTempC: 0, fanRPM: 0, fanPresent: false)
         )
     }
 }

@@ -29,6 +29,10 @@ func runSelfTest() -> Int32 {
     if s.battery.present {
         check(s.battery.percent >= 0 && s.battery.percent <= 100, "battery percent out of range: \(s.battery.percent)")
     }
+    if s.thermal.available {
+        check(s.thermal.socTempC > 5 && s.thermal.socTempC < 120, "SoC temp implausible: \(s.thermal.socTempC)")
+        check(s.thermal.fanRPM >= 0 && s.thermal.fanRPM < 12000, "fan RPM implausible: \(s.thermal.fanRPM)")
+    }
 
     if failures.isEmpty {
         print("selftest PASS: cpu \(Int(s.cpu.usage))%, gpu \(s.gpu.available ? "\(Int(s.gpu.usage))%" : "n/a"), "

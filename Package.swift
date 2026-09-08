@@ -10,7 +10,8 @@ let package = Package(
         .executable(name: "MacVitals", targets: ["MacVitals"]),
     ],
     targets: [
-        .target(name: "VitalsCore"),
+        .target(name: "CSMC"),
+        .target(name: "VitalsCore", dependencies: ["CSMC"]),
         .executableTarget(
             name: "vitals",
             dependencies: ["VitalsCore"]

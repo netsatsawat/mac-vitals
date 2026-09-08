@@ -71,6 +71,11 @@ func printHuman(_ s: Snapshot) {
         let rem = bat.minutesRemaining.map { "  (\($0 / 60)h \($0 % 60)m)" } ?? ""
         print("BAT  \(Int(bat.percent))%   \(bat.isCharging ? "charging" : "on battery")\(rem)")
     }
+    let th = s.thermal
+    if th.available {
+        let fan = th.fanPresent ? "   fan \(th.fanRPM) rpm" : ""
+        print(String(format: "TMP  %.1f°C%@", th.socTempC, fan))
+    }
 }
 
 if watch {

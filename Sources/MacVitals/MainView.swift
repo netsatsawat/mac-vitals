@@ -73,6 +73,9 @@ struct MainView: View {
             HStack(spacing: 14) { cpuChart; gpuChart }
             HStack(spacing: 14) { memoryChart; powerChart }
             HStack(spacing: 14) { networkChart; diskChart }
+            if store.latest.thermal.available {
+                HStack(spacing: 14) { temperatureChart; fanChart }
+            }
         }
     }
 
@@ -266,5 +269,27 @@ struct MainView: View {
                     ChartLine(label: "write", color: writeOrange, points: write)],
             span: range.seconds, yMax: yMax, yFormat: { Fmt.rate($0) },
             currentText: "\(Fmt.gb(d.freeBytes)) GB free", note: nil)
+    }
+
+    private var temperatureChart: some View {
+        let th = store.latest.thermal
+        let pts = series(.temperature)
+        let yMax = Fmt.niceMax(pts.map(\.value), floor: 60)
+        return TimeChart(
+            title: "Temperature", symbol: "thermometer.medium", accent: Palette.load(th.socTempC),
+            lines: [ChartLine(label: "SoC", color: Palette.load(th.socTempC), points: pts)],
+            span: range.seconds, yMax: yMax, yFormat: { "\(Int($0))°" },
+            currentText: String(format: "%.0f°C", th.socTempC), note: "SoC die average")
+    }
+
+    private var fanChart: some View {
+        let th = store.latest.thermal
+        let pts = series(.fanRPM)
+        let yMax = Fmt.niceMax(pts.map(\.value), floor: 2000)
+        return TimeChart(
+            title: "Fan", symbol: "fan", accent: Palette.teal,
+            lines: [ChartLine(label: "Fan", color: Palette.teal, points: pts)],
+            span: range.seconds, yMax: yMax, yFormat: { "\(Int($0))" },
+            currentText: "\(th.fanRPM) rpm", note: th.fanRPM == 0 ? "idle" : nil)
     }
 }

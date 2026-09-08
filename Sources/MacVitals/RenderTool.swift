@@ -9,7 +9,7 @@ enum RenderTool {
         let store = SampleStore(seed: synthetic(),
                                 minutes: syntheticSamples(1440, step: 60),
                                 hours: syntheticSamples(370 * 24, step: 3600))
-        let view = MainView(store: store, scrolls: false, initialRange: range).frame(width: 840, height: 760)
+        let view = MainView(store: store, scrolls: false, initialRange: range).frame(width: 840, height: 940)
         let renderer = ImageRenderer(content: view)
         renderer.scale = 2
         write(renderer, to: path)
@@ -20,7 +20,7 @@ enum RenderTool {
     static func renderSparse(to path: String) {
         let store = SampleStore(seed: Array(synthetic().suffix(180)),
                                 minutes: syntheticSamples(8, step: 60), hours: [])
-        let view = MainView(store: store, scrolls: false, initialRange: .h24).frame(width: 840, height: 760)
+        let view = MainView(store: store, scrolls: false, initialRange: .h24).frame(width: 840, height: 940)
         let renderer = ImageRenderer(content: view)
         renderer.scale = 2
         write(renderer, to: path)
@@ -43,7 +43,9 @@ enum RenderTool {
                 netDown: max(0, 3_000_000 + 6_000_000 * (0.5 + 0.5 * sin(f / 40))),
                 netUp: max(0, 300_000 + 400_000 * abs(sin(f / 33))),
                 diskRead: max(0, 12_000_000 * abs(sin(f / 25))),
-                diskWrite: max(0, 6_000_000 * abs(sin(f / 29 + 1)))
+                diskWrite: max(0, 6_000_000 * abs(sin(f / 29 + 1))),
+                temp: 44 + 14 * sin(f / 60),
+                fan: max(0, 1600 + 900 * sin(f / 70))
             )
         }
     }
@@ -100,7 +102,7 @@ enum RenderTool {
                 cpu: CPUSnapshot(usage: cpu, efficiencyUsage: clamp(cpu * 0.45),
                                  performanceUsage: clamp(cpu * 1.25), perCore: [],
                                  efficiencyCoreCount: 6, performanceCoreCount: 4),
-                gpu: GPUSnapshot(usage: gpu, available: true, provisional: true),
+                gpu: GPUSnapshot(usage: gpu, available: true, provisional: false),
                 memory: MemorySnapshot(totalBytes: total, usedBytes: UInt64(Double(total) * mem / 100),
                                        wiredBytes: 0, compressedBytes: 0, appBytes: 0, usedPercent: mem),
                 power: PowerSnapshot(cpuWatts: watts * 0.6, gpuWatts: watts * 0.4,
@@ -108,7 +110,9 @@ enum RenderTool {
                 network: NetworkSnapshot(uploadBytesPerSec: up, downloadBytesPerSec: down),
                 disk: DiskSnapshot(readBytesPerSec: readB, writeBytesPerSec: writeB,
                                    freeBytes: 1_655_000_000_000, totalBytes: 1_995_000_000_000),
-                battery: BatterySnapshot(present: true, percent: 100, isCharging: false, minutesRemaining: nil)
+                battery: BatterySnapshot(present: true, percent: 100, isCharging: false, minutesRemaining: nil),
+                thermal: ThermalSnapshot(available: true, socTempC: 44 + 14 * sin(f / 60),
+                                         fanRPM: Int(max(0, 1600 + 900 * sin(f / 70))), fanPresent: true)
             )
         }
     }

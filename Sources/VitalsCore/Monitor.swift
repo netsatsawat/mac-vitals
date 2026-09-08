@@ -15,6 +15,7 @@ public final class Monitor {
     private let network = NetworkReader()
     private let disk = DiskReader()
     private let battery = BatteryReader()
+    private let thermal = ThermalReader()
 
     public init() {}
 
@@ -28,7 +29,8 @@ public final class Monitor {
             power: power.read(),
             network: network.read(),
             disk: disk.read(),
-            battery: battery.read()
+            battery: battery.read(),
+            thermal: thermal.read()
         )
     }
 
