@@ -43,6 +43,9 @@ struct MainView: View {
     @ObservedObject var store: SampleStore
     @State private var range: HistoryRange
     @State private var rangeMenu = false
+    @State private var traceStart: Date?
+    @State private var traceResult: TraceResult?
+    @State private var showTrace = false
     var scrolls: Bool
 
     private let readTeal = Palette.teal
@@ -86,11 +89,64 @@ struct MainView: View {
             GaugeMark(size: 18)
             Text("Mac Vitals").font(.system(size: 14, weight: .semibold)).foregroundStyle(Palette.ink)
             batteryPill
+            traceButton
             Spacer()
             collectingHint
             rangeControl
         }
         .padding(.horizontal, 16).padding(.vertical, 12)
+    }
+
+    private var traceButton: some View {
+        Button {
+            if let start = traceStart {
+                var t = Trace(start: start)
+                for s in store.history where s.timestamp >= start { t.add(s) }
+                traceResult = t.result(); traceStart = nil; showTrace = true
+            } else {
+                traceStart = Date()
+            }
+        } label: {
+            HStack(spacing: 5) {
+                Image(systemName: traceStart == nil ? "record.circle" : "stop.circle.fill")
+                    .font(.system(size: 10, weight: .semibold))
+                Text(traceStart == nil ? "Trace" : "Stop")
+                    .font(.system(size: 11, weight: .medium))
+            }
+            .foregroundStyle(traceStart == nil ? Palette.ink2 : Color(red: 1, green: 0.23, blue: 0.19))
+            .padding(.vertical, 4).padding(.horizontal, 10)
+            .background(RoundedRectangle(cornerRadius: 7, style: .continuous).fill(Palette.track))
+        }
+        .buttonStyle(.plain)
+        .help("Measure what a task costs: start, do the work, stop.")
+        .popover(isPresented: $showTrace, arrowEdge: .bottom) { traceResultView }
+    }
+
+    @ViewBuilder private var traceResultView: some View {
+        if let r = traceResult {
+            VStack(alignment: .leading, spacing: 9) {
+                Text("Task cost").font(.system(size: 13, weight: .semibold)).foregroundStyle(Palette.ink)
+                Text(String(format: "%.0f seconds · %d samples", r.durationSeconds, r.samples))
+                    .font(.system(size: 10.5)).foregroundStyle(Palette.ink3)
+                Rectangle().fill(Palette.hair).frame(height: 0.5)
+                traceRow("CPU", String(format: "avg %.0f%%   peak %.0f%%", r.cpuAvgPercent, r.cpuPeakPercent))
+                traceRow("GPU", String(format: "avg %.0f%%   peak %.0f%%", r.gpuAvgPercent, r.gpuPeakPercent))
+                traceRow("Power", String(format: "%.1f W avg · %.3f Wh", r.avgWatts, r.energyWattHours))
+                traceRow("Network", "↓ \(Fmt.bytes(r.networkDownBytes))   ↑ \(Fmt.bytes(r.networkUpBytes))")
+                traceRow("Disk", "R \(Fmt.bytes(r.diskReadBytes))   W \(Fmt.bytes(r.diskWriteBytes))")
+                if r.socTempPeakC > 0 { traceRow("Temp", String(format: "peak %.0f°C", r.socTempPeakC)) }
+            }
+            .padding(14).frame(width: 264)
+        }
+    }
+
+    private func traceRow(_ key: String, _ value: String) -> some View {
+        HStack(spacing: 8) {
+            Text(key).font(.system(size: 11, weight: .medium)).foregroundStyle(Palette.ink2)
+                .frame(width: 62, alignment: .leading)
+            Text(value).font(.vitalsNumber(11)).foregroundStyle(Palette.ink)
+            Spacer(minLength: 0)
+        }
     }
 
     /// Seconds of history actually available for the current range's tier.

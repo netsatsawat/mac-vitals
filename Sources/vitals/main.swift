@@ -22,6 +22,13 @@ if args.contains("--selftest") {
     exit(runSelfTest())
 }
 
+// Trace: measure what a fixed window costs the machine.
+if let ti = CommandLine.arguments.firstIndex(of: "--trace") {
+    let seconds = (ti + 1 < CommandLine.arguments.count ? Double(CommandLine.arguments[ti + 1]) : nil) ?? 10
+    runTrace(seconds: seconds, json: asJSON)
+    exit(0)
+}
+
 let monitor = Monitor()
 
 func encoder() -> JSONEncoder {
@@ -48,6 +55,38 @@ func rate(_ bytesPerSec: Double) -> String {
     if bytesPerSec >= 1_048_576 { return String(format: "%.1f MB/s", bytesPerSec / 1_048_576) }
     if bytesPerSec >= 1024 { return String(format: "%.0f KB/s", bytesPerSec / 1024) }
     return String(format: "%.0f B/s", bytesPerSec)
+}
+
+func bytesHuman(_ b: Double) -> String {
+    if b >= 1_073_741_824 { return String(format: "%.2f GB", b / 1_073_741_824) }
+    if b >= 1_048_576 { return String(format: "%.1f MB", b / 1_048_576) }
+    if b >= 1024 { return String(format: "%.0f KB", b / 1024) }
+    return String(format: "%.0f B", b)
+}
+
+func runTrace(seconds: Double, json: Bool) {
+    let m = Monitor()
+    _ = m.sample() // prime the delta baseline
+    if !json { FileHandle.standardError.write(Data("tracing for \(Int(seconds))s…\n".utf8)) }
+    var trace = Trace()
+    let end = Date().addingTimeInterval(seconds)
+    while Date() < end {
+        Thread.sleep(forTimeInterval: 1.0)
+        trace.add(m.sample())
+    }
+    let r = trace.result()
+    if json {
+        let e = JSONEncoder(); e.outputFormatting = [.prettyPrinted, .sortedKeys]
+        if let d = try? e.encode(r), let s = String(data: d, encoding: .utf8) { print(s) }
+        return
+    }
+    print(String(format: "Trace: %.1fs (%d samples)", r.durationSeconds, r.samples))
+    print(String(format: "  CPU    avg %2.0f%%   peak %2.0f%%", r.cpuAvgPercent, r.cpuPeakPercent))
+    print(String(format: "  GPU    avg %2.0f%%   peak %2.0f%%", r.gpuAvgPercent, r.gpuPeakPercent))
+    print(String(format: "  Power  avg %.1f W   energy %.3f Wh", r.avgWatts, r.energyWattHours))
+    print("  Net    ↓ \(bytesHuman(r.networkDownBytes))   ↑ \(bytesHuman(r.networkUpBytes))")
+    print("  Disk   R \(bytesHuman(r.diskReadBytes))   W \(bytesHuman(r.diskWriteBytes))")
+    if r.socTempPeakC > 0 { print(String(format: "  Temp   peak %.0f°C", r.socTempPeakC)) }
 }
 
 func printHuman(_ s: Snapshot) {

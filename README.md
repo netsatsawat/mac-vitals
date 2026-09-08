@@ -34,6 +34,7 @@ It shows up three ways, over one engine:
 - **Memory** used against total, the way Activity Monitor counts it.
 - **Power** in watts, per rail: CPU and GPU, read from the chip's energy counters.
 - **Network, disk, and battery** too: up and down throughput, read and write activity with free space, and charge.
+- **Temperature and fan** from the SMC, and **task traces** that measure what a build or run cost (CPU, GPU, watt-hours, bytes moved) in the app, the CLI, and over MCP.
 - **A full window** with every metric charted from the last minute to a full year, plus year-to-date, with history persisted across restarts so the long ranges fill in over time.
 - **No password, ever.** Everything comes through Apple's IOReport interface as a normal user.
 - **Zero dependencies.** One Swift package, no runtime, no helper daemon, no kernel extension.
@@ -77,6 +78,7 @@ swift build -c release --product vitals
 .build/release/vitals            # one human-readable reading
 .build/release/vitals --json     # one reading as JSON
 .build/release/vitals --watch    # stream once a second
+.build/release/vitals --trace 30 # measure the next 30s and print the cost
 .build/release/vitals --selftest # bounded-value check, exits 0 or 1
 ```
 
@@ -107,10 +109,11 @@ Two tools are exposed:
 
 | Tool | What it returns |
 | --- | --- |
-| `get_vitals` | One live reading: CPU (overall plus E and P clusters), GPU, memory, and power in watts. |
+| `get_vitals` | One live reading: CPU (overall plus E and P clusters), GPU, memory, power, network, disk, battery, temperature. |
 | `get_vitals_history` | Per-second history for up to the last 60 seconds of CPU%, GPU%, memory%, and watts. |
+| `start_trace` / `stop_trace` | Bracket a task. `stop_trace` returns what it cost: CPU and GPU average and peak, average watts and energy in watt-hours, network and disk totals, and peak temperature. |
 
-Both are read-only. The agent can see the machine and never change it.
+They are read-only. The agent can see the machine and never change it. The trace tools are the point: an agent wraps its own build in `start_trace` … `stop_trace` and gets the energy and resource cost back.
 
 ## How it works
 
@@ -162,9 +165,9 @@ If you want the most features today, `stats` is excellent. Mac Vitals is for peo
 - [x] Full window with history from 1 minute to 1 year (plus YTD), persisted across restarts
 - [x] Network, disk, and battery
 - [x] Calibrate GPU percent against `powermetrics` (M5)
-- [ ] **Task traces**: bracket a build or a run and get back what it cost (CPU, GPU, watt-hours), in the app and over MCP
+- [x] Task traces (app, CLI, and MCP)
+- [x] Temperature and fan (SMC)
 - [ ] Per-process attribution (what is using the machine)
-- [ ] Sensors: temperature and fan
 - [ ] Launch at login toggle
 - [ ] Notarized release and a Homebrew cask
 

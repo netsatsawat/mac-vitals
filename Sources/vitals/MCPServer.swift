@@ -19,6 +19,7 @@ final class MCPServer {
     private var latest: Snapshot = .placeholder
     private var history: [Snapshot] = []
     private let historyCapacity = 60
+    private var trace: Trace?
 
     func run() -> Never {
         startSampler()
@@ -58,6 +59,7 @@ final class MCPServer {
         latest = s
         history.append(s)
         if history.count > historyCapacity { history.removeFirst(history.count - historyCapacity) }
+        if trace != nil { trace!.add(s) }
     }
 
     private func snapshot() -> Snapshot { lock.lock(); defer { lock.unlock() }; return latest }
@@ -114,6 +116,16 @@ final class MCPServer {
                     "additionalProperties": false,
                 ],
             ],
+            [
+                "name": "start_trace",
+                "description": "Begin measuring what a task costs this Mac. Call this, run the work, then call stop_trace. Only one trace runs at a time; calling start again restarts it.",
+                "inputSchema": ["type": "object", "properties": [String: Any](), "additionalProperties": false],
+            ],
+            [
+                "name": "stop_trace",
+                "description": "End the current trace and return what the work cost: duration, CPU and GPU average and peak, average watts and energy in watt-hours, network and disk totals, and peak temperature.",
+                "inputSchema": ["type": "object", "properties": [String: Any](), "additionalProperties": false],
+            ],
         ]
     }
 
@@ -128,6 +140,15 @@ final class MCPServer {
         case "get_vitals_history":
             let seconds = (args["seconds"] as? Int) ?? 30
             return toolText(id, historyText(seconds: max(1, min(60, seconds))))
+        case "start_trace":
+            lock.lock(); trace = Trace(); lock.unlock()
+            return toolText(id, "Trace started. Run the work, then call stop_trace.")
+        case "stop_trace":
+            lock.lock(); let finished = trace; trace = nil; lock.unlock()
+            guard let finished else {
+                return errorReply(id, code: -32602, message: "no active trace; call start_trace first")
+            }
+            return toolText(id, traceText(finished.result()))
         default:
             return errorReply(id, code: -32602, message: "unknown tool: \(name)")
         }
@@ -144,6 +165,13 @@ final class MCPServer {
 
     private func jsonText(from snapshot: Snapshot) -> String {
         guard let data = try? encoder().encode(snapshot), let s = String(data: data, encoding: .utf8) else {
+            return "{}"
+        }
+        return s
+    }
+
+    private func traceText(_ result: TraceResult) -> String {
+        guard let data = try? encoder().encode(result), let s = String(data: data, encoding: .utf8) else {
             return "{}"
         }
         return s

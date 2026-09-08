@@ -14,6 +14,14 @@ enum Fmt {
         String(format: "%.1f", Double(bytes) / 1_073_741_824)
     }
 
+    /// A byte total as B/KB/MB/GB (for trace summaries).
+    static func bytes(_ b: Double) -> String {
+        if b >= 1_073_741_824 { return String(format: "%.2f GB", b / 1_073_741_824) }
+        if b >= 1_048_576 { return String(format: "%.1f MB", b / 1_048_576) }
+        if b >= 1024 { return String(format: "%.0f KB", b / 1024) }
+        return String(format: "%.0f B", b)
+    }
+
     /// A very compact byte rate for the menu bar: "12M", "820K", or "0".
     /// Integer-only to keep the item's width from jittering as rates change.
     static func rateCompact(_ bytesPerSec: Double) -> String {
