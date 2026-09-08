@@ -3,19 +3,19 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Mac Vitals — macOS menu bar system monitor for Apple Silicon</title>
+<title>Mac Vitals · macOS menu bar system monitor for Apple Silicon</title>
 <meta name="description" content="Open-source macOS menu bar system monitor for Apple Silicon. Live CPU, GPU, memory, power, temperature, and fan, with history and an MCP server for AI agents. No sudo, no dependencies. A free iStat Menus alternative.">
 <link rel="canonical" href="https://netsatsawat.github.io/mac-vitals/">
-<meta name="theme-color" content="#0c0a16">
+<meta name="theme-color" content="#06070c">
 <meta name="keywords" content="macOS system monitor, Apple Silicon, menu bar, CPU, GPU, memory, power, temperature, fan, MCP, iStat Menus alternative, stats, macmon, Swift, open source">
 
 <meta property="og:type" content="website">
-<meta property="og:title" content="Mac Vitals — macOS system monitor for Apple Silicon">
+<meta property="og:title" content="Mac Vitals · macOS system monitor for Apple Silicon">
 <meta property="og:description" content="Live CPU, GPU, memory, power, temperature, and fan, one glance away. No sudo, no dependencies, with an MCP server for AI agents.">
 <meta property="og:url" content="https://netsatsawat.github.io/mac-vitals/">
 <meta property="og:image" content="https://netsatsawat.github.io/mac-vitals/social-preview.png">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Mac Vitals — macOS system monitor for Apple Silicon">
+<meta name="twitter:title" content="Mac Vitals · macOS system monitor for Apple Silicon">
 <meta name="twitter:description" content="Live CPU, GPU, memory, power, temperature, and fan, one glance away. No sudo, no dependencies, with an MCP server for AI agents.">
 <meta name="twitter:image" content="https://netsatsawat.github.io/mac-vitals/social-preview.png">
 
@@ -36,221 +36,398 @@
 
 <style>
   :root {
-    --bg: #0b0910; --panel: rgba(255,255,255,.045); --hair: rgba(255,255,255,.09);
-    --ink: #f5f5f7; --ink2: rgba(235,235,245,.66); --ink3: rgba(235,235,245,.42);
-    --green: #34c759; --blue: #0a84ff; --amber: #ff9f0a; --purple: #bf5af2;
-    --font: -apple-system, "SF Pro Text", "SF Pro Display", system-ui, Segoe UI, Roboto, sans-serif;
-    --num: "SF Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
-    --max: 1080px;
+    --bg: #06070c; --bg2: #090b12; --panel: #0d1018; --panel2: #11141d;
+    --hair: rgba(255,255,255,.08); --hair2: rgba(255,255,255,.14);
+    --ink: #f4f5f8; --ink2: rgba(233,235,242,.62); --ink3: rgba(233,235,242,.38);
+    --green: #30d158; --amber: #ffd426; --orange: #ff9f0a; --red: #ff453a;
+    --blue: #0a84ff; --teal: #64d2ff; --purple: #bf5af2;
+    --disp: "SF Pro Display", -apple-system, system-ui, "Segoe UI", Roboto, sans-serif;
+    --text: -apple-system, "SF Pro Text", system-ui, "Segoe UI", Roboto, sans-serif;
+    --mono: "SF Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  html { scroll-behavior: smooth; }
+  html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
   body {
-    font-family: var(--font); color: var(--ink); background: var(--bg);
-    -webkit-font-smoothing: antialiased; line-height: 1.5;
-    background-image: radial-gradient(120% 80% at 12% -8%, #2b2150 0%, #17132f 34%, #0b0910 70%);
-    background-repeat: no-repeat;
+    font-family: var(--text); background: var(--bg); color: var(--ink);
+    -webkit-font-smoothing: antialiased; line-height: 1.5; overflow-x: hidden;
   }
+  ::selection { background: rgba(48,209,88,.28); color: #fff; }
+  ::-webkit-scrollbar { width: 11px; height: 11px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: #23262f; border-radius: 6px; border: 3px solid var(--bg); }
+  ::-webkit-scrollbar-thumb:hover { background: #30343f; }
   a { color: inherit; text-decoration: none; }
   img { max-width: 100%; display: block; }
-  .wrap { max-width: var(--max); margin: 0 auto; padding: 0 24px; }
+  :focus-visible { outline: 2px solid var(--green); outline-offset: 3px; border-radius: 4px; }
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 0 26px; }
+  .mono { font-family: var(--mono); font-variant-numeric: tabular-nums; letter-spacing: -.02em; }
 
-  /* nav */
-  nav { position: sticky; top: 0; z-index: 20; backdrop-filter: blur(18px);
-    background: rgba(11,9,16,.6); border-bottom: .5px solid var(--hair); }
-  nav .wrap { display: flex; align-items: center; gap: 12px; height: 58px; }
-  nav .brand { display: flex; align-items: center; gap: 9px; font-weight: 700; letter-spacing: -.01em; font-size: 16px; }
-  nav .brand svg { width: 24px; height: 24px; }
+  /* ---------- nav ---------- */
+  nav { position: sticky; top: 0; z-index: 50; height: 56px;
+    background: rgba(6,7,12,.72); backdrop-filter: saturate(1.4) blur(20px);
+    border-bottom: .5px solid var(--hair); }
+  nav .wrap { display: flex; align-items: center; height: 100%; gap: 14px; }
+  .logo { display: flex; align-items: center; gap: 9px; font-family: var(--disp); font-weight: 700; font-size: 16px; letter-spacing: -.02em; }
+  .logo svg { width: 23px; height: 23px; }
   nav .sp { flex: 1; }
-  nav .links { display: flex; align-items: center; gap: 22px; font-size: 14px; color: var(--ink2); }
-  nav .links a:hover { color: var(--ink); }
-  nav .gh { display: inline-flex; align-items: center; gap: 7px; padding: 7px 13px; border-radius: 9px;
-    background: var(--ink); color: #0b0910; font-weight: 600; font-size: 13.5px; }
-  @media (max-width: 680px) { nav .links a.hide-sm { display: none; } }
+  nav .navlinks { display: flex; gap: 24px; font-size: 13.5px; color: var(--ink2); }
+  nav .navlinks a { transition: color .15s; }
+  nav .navlinks a:hover { color: var(--ink); }
+  .ghbtn { display: inline-flex; align-items: center; gap: 7px; height: 34px; padding: 0 15px;
+    border-radius: 8px; background: var(--ink); color: #06070c; font-weight: 600; font-size: 13.5px;
+    transition: transform .16s cubic-bezier(.16,1,.3,1), box-shadow .16s; }
+  .ghbtn:hover { transform: translateY(-1px); box-shadow: 0 10px 22px -12px rgba(0,0,0,.7); }
+  @media (max-width: 720px) { nav .navlinks { display: none; } }
 
-  /* hero */
-  .hero { padding: 76px 0 40px; text-align: center; }
-  .eyebrow { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600;
-    color: var(--ink2); background: var(--panel); border: .5px solid var(--hair);
-    padding: 6px 13px; border-radius: 999px; margin-bottom: 24px; }
-  .eyebrow i { width: 7px; height: 7px; border-radius: 50%; background: var(--green); box-shadow: 0 0 0 3px rgba(52,199,89,.2); }
-  h1 { font-size: clamp(38px, 6vw, 62px); line-height: 1.04; letter-spacing: -.03em; font-weight: 700;
-    text-wrap: balance; margin-bottom: 20px; }
-  h1 .grad { background: linear-gradient(96deg, #34c759, #0a84ff 60%, #bf5af2);
-    -webkit-background-clip: text; background-clip: text; color: transparent; }
-  .lede { font-size: clamp(17px, 2.3vw, 21px); color: var(--ink2); max-width: 620px; margin: 0 auto 30px; text-wrap: pretty; }
-  .cta { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
-  .btn { display: inline-flex; align-items: center; gap: 8px; padding: 12px 20px; border-radius: 11px;
-    font-weight: 600; font-size: 15px; border: .5px solid transparent; }
-  .btn.primary { background: var(--ink); color: #0b0910; }
-  .btn.primary:hover { transform: translateY(-1px); }
-  .btn.ghost { background: var(--panel); border-color: var(--hair); color: var(--ink); }
-  .btn.ghost:hover { background: rgba(255,255,255,.09); }
-  .btn { transition: transform .15s ease, background .15s ease; }
+  /* ---------- hero ---------- */
+  .hero { position: relative; padding: 82px 0 70px; overflow: hidden; }
+  .aurora { position: absolute; inset: -30% -10% auto -10%; height: 900px; z-index: 0; pointer-events: none;
+    background:
+      radial-gradient(46% 40% at 22% 20%, rgba(48,209,88,.16), transparent 70%),
+      radial-gradient(44% 42% at 82% 12%, rgba(10,132,255,.18), transparent 70%),
+      radial-gradient(50% 50% at 60% 60%, rgba(191,90,242,.12), transparent 72%);
+    filter: blur(20px); animation: drift 26s ease-in-out infinite alternate; }
+  @keyframes drift { 0%{transform:translate3d(0,0,0) scale(1)} 100%{transform:translate3d(-4%,3%,0) scale(1.12)} }
+  .grid-bg { position: absolute; inset: 0; z-index: 0; pointer-events: none; opacity: .5;
+    background-image: linear-gradient(var(--hair) .5px, transparent .5px), linear-gradient(90deg, var(--hair) .5px, transparent .5px);
+    background-size: 64px 64px; mask-image: radial-gradient(120% 90% at 50% 0%, #000 30%, transparent 78%); }
+  .hero .wrap { position: relative; z-index: 2; display: grid; grid-template-columns: 1.02fr .98fr; gap: 46px; align-items: center; }
+  @media (max-width: 940px){ .hero .wrap { grid-template-columns: 1fr; gap: 40px; } }
 
-  .shot { margin: 46px auto 0; max-width: 940px; border-radius: 16px; overflow: hidden;
-    border: .5px solid var(--hair); box-shadow: 0 40px 90px -30px rgba(0,0,0,.8); }
+  .tag { display: inline-flex; align-items: center; gap: 8px; font-family: var(--mono); font-size: 12px;
+    color: var(--ink2); letter-spacing: .02em; margin-bottom: 22px; }
+  .tag .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); box-shadow: 0 0 0 4px rgba(48,209,88,.16); }
+  .tag .dot { animation: blink 2.4s ease-in-out infinite; }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.35} }
+  h1 { font-family: var(--disp); font-weight: 700; font-size: clamp(44px, 6.6vw, 82px); line-height: .98;
+    letter-spacing: -.045em; text-wrap: balance; }
+  h1 .dim { color: var(--ink3); }
+  .lede { margin-top: 22px; font-size: clamp(16.5px, 1.5vw, 19px); color: var(--ink2); max-width: 30em; text-wrap: pretty; }
+  .cta { margin-top: 30px; display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+  .btn { display: inline-flex; align-items: center; gap: 9px; height: 50px; padding: 0 24px; border-radius: 12px;
+    font-family: var(--disp); font-weight: 600; font-size: 16px; letter-spacing: -.01em;
+    transition: transform .16s cubic-bezier(.16,1,.3,1), box-shadow .2s, background .2s, border-color .2s; }
+  .btn.primary { background: linear-gradient(180deg, #37d75f, #22b84a); color: #04120a;
+    box-shadow: 0 12px 26px -14px rgba(0,0,0,.72), inset 0 1px 0 rgba(255,255,255,.28); }
+  .btn.primary:hover { transform: translateY(-2px); box-shadow: 0 20px 42px -16px rgba(0,0,0,.82), inset 0 1px 0 rgba(255,255,255,.28); }
+  .btn.ghost { background: rgba(255,255,255,.05); border: .5px solid var(--hair2); color: var(--ink); }
+  .btn.ghost:hover { background: rgba(255,255,255,.1); transform: translateY(-2px); }
+  .metabar { margin-top: 30px; display: flex; gap: 22px; flex-wrap: wrap; font-family: var(--mono); font-size: 12px; color: var(--ink3); }
+  .metabar span b { color: var(--ink2); font-weight: 600; }
 
-  /* sections */
-  section { padding: 66px 0; }
-  .kicker { font-size: 13px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--blue); margin-bottom: 12px; }
-  h2 { font-size: clamp(27px, 4vw, 38px); letter-spacing: -.02em; line-height: 1.12; text-wrap: balance; margin-bottom: 14px; }
-  .sec-lede { color: var(--ink2); max-width: 640px; font-size: 17px; }
+  /* ---------- instrument (hero live panel) ---------- */
+  .inst { position: relative; border-radius: 20px; background: linear-gradient(180deg, #0e1119, #0a0c12);
+    border: .5px solid var(--hair2); overflow: hidden;
+    box-shadow: 0 40px 90px -34px rgba(0,0,0,.86), 0 3px 10px -4px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,.06); }
+  .inst .bar { display: flex; align-items: center; gap: 8px; padding: 11px 14px; border-bottom: .5px solid var(--hair);
+    font-family: var(--mono); font-size: 11.5px; color: var(--ink2); }
+  .inst .bar .l { display: flex; align-items: center; gap: 6px; }
+  .inst .bar .l svg { width: 13px; height: 13px; opacity: .8; }
+  .inst .bar .sp { flex: 1; }
+  .inst .bar .live { color: var(--ink3); letter-spacing: .1em; }
+  .inst .chartbox { position: relative; height: 208px; }
+  .inst canvas { display: block; width: 100%; height: 100%; }
+  .inst .rings { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px; border-top: .5px solid var(--hair); background: var(--hair); }
+  .gaugecell { background: linear-gradient(180deg, #0d1018, #0a0c12); padding: 16px 12px 15px; display: flex; flex-direction: column; align-items: center; gap: 9px; }
+  .ring { position: relative; width: 74px; height: 74px; }
+  .ring svg { transform: rotate(-90deg); display: block; }
+  .ring .num { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+    font-family: var(--mono); font-size: 18px; font-weight: 600; letter-spacing: -.04em; }
+  .ring .num u { font-size: 10px; opacity: .5; text-decoration: none; margin-left: 1px; }
+  .gaugecell .lab { font-size: 11.5px; font-weight: 600; color: var(--ink2); display: flex; align-items: center; gap: 5px; }
+  .gaugecell .lab svg { width: 13px; height: 13px; }
+  .gaugecell .sub { font-family: var(--mono); font-size: 10px; color: var(--ink3); }
+  .inst .foot { display: flex; align-items: center; gap: 10px; padding: 13px 16px; border-top: .5px solid var(--hair); }
+  .inst .foot .w { font-family: var(--mono); font-size: 21px; font-weight: 600; letter-spacing: -.03em; }
+  .inst .foot .w u { font-size: 12px; opacity: .5; text-decoration: none; }
+  .inst .foot .split { margin-left: auto; display: flex; gap: 16px; font-family: var(--mono); font-size: 11.5px; color: var(--ink2); }
+  .inst .foot .split b { color: var(--ink); }
 
-  /* feature grid */
-  .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 38px; }
-  @media (max-width: 860px) { .grid { grid-template-columns: repeat(2, 1fr); } }
-  @media (max-width: 560px) { .grid { grid-template-columns: 1fr; } }
-  .card { background: var(--panel); border: .5px solid var(--hair); border-radius: 15px; padding: 20px; }
-  .card .ic { width: 38px; height: 38px; border-radius: 10px; display: grid; place-items: center; margin-bottom: 14px; }
-  .card .ic svg { width: 20px; height: 20px; }
-  .card h3 { font-size: 16.5px; letter-spacing: -.01em; margin-bottom: 6px; }
-  .card p { font-size: 14px; color: var(--ink2); }
+  /* ---------- generic section ---------- */
+  section { position: relative; padding: 92px 0; }
+  .rule { height: .5px; background: var(--hair); }
+  h2 { font-family: var(--disp); font-weight: 700; font-size: clamp(28px, 3.8vw, 46px); line-height: 1.05;
+    letter-spacing: -.035em; text-wrap: balance; max-width: 18ch; }
+  .say { margin-top: 16px; color: var(--ink2); font-size: 17px; max-width: 52ch; }
+  .headrow { display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; flex-wrap: wrap; }
 
-  /* split */
-  .split { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: center; }
-  .split.reverse .txt { order: 2; }
-  @media (max-width: 800px) { .split { grid-template-columns: 1fr; gap: 26px; } .split.reverse .txt { order: 0; } }
-  .split img { border-radius: 14px; border: .5px solid var(--hair); box-shadow: 0 30px 70px -30px rgba(0,0,0,.7); }
-  .split ul { list-style: none; margin-top: 18px; display: flex; flex-direction: column; gap: 11px; }
-  .split li { display: flex; gap: 10px; font-size: 15px; color: var(--ink2); }
-  .split li svg { width: 18px; height: 18px; flex: none; margin-top: 2px; color: var(--green); }
+  /* instrument band: metrics as live readouts, not cards */
+  .band { margin-top: 44px; border: .5px solid var(--hair); border-radius: 18px; overflow: hidden; background: var(--panel); }
+  .band .row { display: grid; grid-template-columns: repeat(3, 1fr); }
+  .band .row:not(:last-child) { border-bottom: .5px solid var(--hair); }
+  .cellx { padding: 22px 24px; border-right: .5px solid var(--hair); position: relative; }
+  .cellx:last-child { border-right: none; }
+  .cellx .top { display: flex; align-items: center; gap: 8px; color: var(--ink2); font-size: 13px; font-weight: 600; }
+  .cellx .top svg { width: 16px; height: 16px; }
+  .cellx .big { margin-top: 12px; font-family: var(--mono); font-size: clamp(26px, 3vw, 34px); font-weight: 600; letter-spacing: -.04em; }
+  .cellx .big u { font-size: .5em; opacity: .5; text-decoration: none; margin-left: 2px; }
+  .cellx .note { margin-top: 4px; font-family: var(--mono); font-size: 11.5px; color: var(--ink3); }
+  .cellx .track { margin-top: 14px; height: 3px; border-radius: 2px; background: rgba(255,255,255,.08); overflow: hidden; }
+  .cellx .track b { display: block; height: 100%; border-radius: 2px; width: 100%; transform: scaleX(0); transform-origin: left; transition: transform 1.1s cubic-bezier(.16,1,.3,1); }
+  @media (max-width: 720px){ .band .row { grid-template-columns: 1fr; } .cellx { border-right: none; border-bottom: .5px solid var(--hair); } .band .row:last-child .cellx:last-child{border-bottom:none} }
 
-  /* install */
-  .code { background: #08070d; border: .5px solid var(--hair); border-radius: 14px; padding: 20px 22px;
-    font-family: var(--num); font-size: 13.5px; color: #d9d9e3; overflow-x: auto; margin-top: 24px; line-height: 1.75; }
-  .code .c { color: var(--ink3); }
-  .code .p { color: var(--green); }
+  /* calibration */
+  .calib { margin-top: 40px; display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: center; }
+  @media (max-width: 860px){ .calib { grid-template-columns: 1fr; gap: 28px; } }
+  .plot { border: .5px solid var(--hair); border-radius: 16px; background: var(--panel); padding: 20px; }
+  .plot .legend { display: flex; gap: 18px; font-family: var(--mono); font-size: 11.5px; color: var(--ink2); margin-bottom: 10px; }
+  .plot .legend i { display: inline-block; width: 20px; height: 2px; vertical-align: middle; margin-right: 6px; border-radius: 2px; }
+  .calib ul { list-style: none; margin-top: 20px; display: flex; flex-direction: column; gap: 13px; }
+  .calib li { display: flex; gap: 11px; font-size: 15.5px; color: var(--ink2); }
+  .calib li svg { width: 19px; height: 19px; flex: none; margin-top: 1px; color: var(--green); }
+  .calib code, .say code, .term code { font-family: var(--mono); font-size: .88em; color: var(--teal); }
 
-  /* table */
-  .tablewrap { overflow-x: auto; margin-top: 30px; border: .5px solid var(--hair); border-radius: 14px; }
-  table { border-collapse: collapse; width: 100%; font-size: 14.5px; min-width: 560px; }
-  th, td { padding: 13px 16px; text-align: center; border-bottom: .5px solid var(--hair); }
-  th:first-child, td:first-child { text-align: left; color: var(--ink2); }
-  thead th { font-weight: 700; }
+  /* full-bleed product shot */
+  .showcase { text-align: center; }
+  .showcase .frame { margin: 44px auto 0; max-width: 960px; border-radius: 18px; overflow: hidden;
+    border: .5px solid var(--hair2); box-shadow: 0 50px 110px -40px rgba(0,0,0,.9); background: var(--panel); }
+  .rangebar { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; margin-top: 30px; }
+  .rangebar span { font-family: var(--mono); font-size: 12px; color: var(--ink3); border: .5px solid var(--hair);
+    padding: 5px 11px; border-radius: 7px; transition: color .2s, border-color .2s; }
+  .rangebar span.on { color: #04120a; background: var(--green); border-color: transparent; font-weight: 600; }
+
+  /* agent terminal */
+  .agent { display: grid; grid-template-columns: .95fr 1.05fr; gap: 40px; align-items: center; }
+  @media (max-width: 860px){ .agent { grid-template-columns: 1fr; gap: 28px; } }
+  .term { border-radius: 14px; border: .5px solid var(--hair2); background: #04050a; overflow: hidden;
+    box-shadow: 0 34px 80px -34px rgba(0,0,0,.9); }
+  .term .tbar { display: flex; align-items: center; gap: 7px; padding: 11px 14px; border-bottom: .5px solid var(--hair); }
+  .term .tbar i { width: 11px; height: 11px; border-radius: 50%; background: #2a2d36; }
+  .term .tbar i:nth-child(1){ background:#ff5f57 } .term .tbar i:nth-child(2){ background:#febc2e } .term .tbar i:nth-child(3){ background:#28c840 }
+  .term .tbar span { margin-left: 8px; font-family: var(--mono); font-size: 11.5px; color: var(--ink3); }
+  .term pre { margin: 0; padding: 18px 18px 22px; font-family: var(--mono); font-size: 12.8px; line-height: 1.7; color: #d7dae3; white-space: pre-wrap; word-break: break-word; min-height: 232px; }
+  .term .pr { color: var(--green); } .term .fl { color: var(--teal); } .term .k { color: var(--purple); } .term .n { color: var(--amber); } .term .cm { color: var(--ink3); }
+  .caret { display: inline-block; width: 8px; height: 15px; background: var(--green); vertical-align: -2px; margin-left: 2px; animation: caret 1.05s step-end infinite; }
+  @keyframes caret { 50%{opacity:0} }
+
+  /* comparison */
+  .tablewrap { margin-top: 40px; overflow-x: auto; border: .5px solid var(--hair); border-radius: 16px; }
+  table { border-collapse: collapse; width: 100%; min-width: 560px; font-size: 14.5px; }
+  th, td { padding: 15px 18px; text-align: center; border-bottom: .5px solid var(--hair); }
+  th:first-child, td:first-child { text-align: left; color: var(--ink2); font-weight: 500; }
+  thead th { font-family: var(--disp); font-weight: 600; letter-spacing: -.01em; }
   thead th.us { color: var(--green); }
+  thead th.us::after { content: ""; }
   tbody tr:last-child td { border-bottom: none; }
-  .yes { color: var(--green); font-weight: 700; }
-  .no { color: var(--ink3); }
+  tbody td.usc { background: rgba(48,209,88,.05); }
+  .yes { color: var(--green); font-weight: 700; } .no { color: var(--ink3); }
+  .price { font-family: var(--mono); }
 
-  footer { border-top: .5px solid var(--hair); padding: 40px 0 60px; color: var(--ink3); font-size: 14px; }
-  footer .wrap { display: flex; flex-wrap: wrap; gap: 10px 26px; align-items: center; }
-  footer a { color: var(--ink2); }
-  footer a:hover { color: var(--ink); }
+  /* closing */
+  .close { text-align: center; padding: 110px 0 120px; }
+  .close h2 { margin: 0 auto; max-width: 20ch; font-size: clamp(32px, 5vw, 60px); }
+  .close .cta { justify-content: center; margin-top: 34px; }
+
+  footer { border-top: .5px solid var(--hair); padding: 34px 0 60px; }
+  footer .wrap { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 24px; color: var(--ink3); font-size: 13.5px; font-family: var(--mono); }
+  footer a { color: var(--ink2); transition: color .15s; } footer a:hover { color: var(--ink); }
   footer .sp { flex: 1; }
+
+  /* reveal */
+  .js .reveal { opacity: 0; transform: translateY(22px); }
+  .reveal.in { opacity: 1; transform: none; transition: opacity .8s cubic-bezier(.16,1,.3,1), transform .8s cubic-bezier(.16,1,.3,1); }
+  @media (prefers-reduced-motion: reduce) {
+    .js .reveal { opacity: 1 !important; transform: none !important; }
+    .aurora, .tag .dot, .caret { animation: none !important; }
+    html { scroll-behavior: auto; }
+  }
 </style>
 </head>
 <body>
+<script>document.documentElement.classList.add('js');</script>
 
 <nav><div class="wrap">
-  <a class="brand" href="#top">
-    <svg viewBox="0 0 24 24" fill="none"><defs><linearGradient id="g" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#34c759"/><stop offset=".55" stop-color="#ffcc00"/><stop offset="1" stop-color="#ff3b30"/></linearGradient></defs><g transform="rotate(135 12 12)"><circle cx="12" cy="12" r="7.5" stroke="#ffffff" stroke-opacity=".18" stroke-width="3.2" stroke-linecap="round" stroke-dasharray="35.3 11.8"/><circle cx="12" cy="12" r="7.5" stroke="url(#g)" stroke-width="3.2" stroke-linecap="round" stroke-dasharray="26.4 20.7"/></g><circle cx="12" cy="12" r="1.7" fill="#fff"/></svg>
+  <a class="logo" href="#top" aria-label="Mac Vitals home">
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><defs><linearGradient id="gm" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#34c759"/><stop offset=".55" stop-color="#ffcc00"/><stop offset="1" stop-color="#ff3b30"/></linearGradient></defs><g transform="rotate(135 12 12)"><circle cx="12" cy="12" r="7.5" stroke="#fff" stroke-opacity=".18" stroke-width="3.2" stroke-linecap="round" stroke-dasharray="35.3 11.8"/><circle cx="12" cy="12" r="7.5" stroke="url(#gm)" stroke-width="3.2" stroke-linecap="round" stroke-dasharray="26.4 20.7"/></g><circle cx="12" cy="12" r="1.7" fill="#fff"/></svg>
     Mac Vitals
   </a>
   <span class="sp"></span>
-  <div class="links">
-    <a class="hide-sm" href="#features">Features</a>
-    <a class="hide-sm" href="#install">Install</a>
-    <a class="hide-sm" href="#agent">For agents</a>
-    <a class="gh" href="https://github.com/netsatsawat/mac-vitals">GitHub ↗</a>
+  <div class="navlinks">
+    <a href="#metrics">Metrics</a>
+    <a href="#gpu">GPU</a>
+    <a href="#history">History</a>
+    <a href="#agent">Agents</a>
+    <a href="#install">Install</a>
   </div>
+  <a class="ghbtn" href="https://github.com/netsatsawat/mac-vitals">GitHub ↗</a>
 </div></nav>
 
 <a id="top"></a>
-<header class="hero"><div class="wrap">
-  <span class="eyebrow"><i></i>Open source · macOS 14+ · Apple Silicon</span>
-  <h1>The Mac's own numbers,<br><span class="grad">one glance away</span></h1>
-  <p class="lede">An open-source macOS menu bar system monitor for Apple Silicon. Live CPU, GPU, memory, power, temperature, and fan, with history you keep and an MCP server your coding agent can read. No password, no dependencies.</p>
-  <div class="cta">
-    <a class="btn primary" href="https://github.com/netsatsawat/mac-vitals">Get it on GitHub</a>
-    <a class="btn ghost" href="#install">Build from source</a>
-  </div>
-  <img class="shot" src="hero.png" alt="Mac Vitals menu bar readout, popover, and floating widget showing CPU, GPU, memory, power, network, and battery on Apple Silicon" width="940" height="470">
-</div></header>
+<header class="hero">
+  <div class="aurora"></div>
+  <div class="grid-bg"></div>
+  <div class="wrap">
+    <div class="htext">
+      <h1>Your Mac,<br>measuring<br><span class="dim">itself.</span></h1>
+      <p class="lede">A menu bar system monitor for Apple Silicon. Every core, watt, and degree the chip reports, read as a normal user. No password. No dependencies. And the same engine speaks MCP, so your coding agent can read the machine too.</p>
+      <div class="cta">
+        <a class="btn primary" href="https://github.com/netsatsawat/mac-vitals">Get it on GitHub</a>
+        <a class="btn ghost" href="#install">Build from source</a>
+      </div>
+      <div class="metabar">
+        <span><b>0</b> sudo prompts</span>
+        <span><b>0</b> dependencies</span>
+        <span><b>1</b> Swift package</span>
+        <span><b>&lt;4 MB</b> of history</span>
+      </div>
+    </div>
 
-<section id="features"><div class="wrap">
-  <div class="kicker">Everything the chip measures</div>
-  <h2>One engine, every metric, no root</h2>
-  <p class="sec-lede">Mac Vitals reads it all as a normal user through Apple's IOReport interface. No <code>sudo</code> prompt, no helper daemon, no kernel extension.</p>
-  <div class="grid">
-    <div class="card"><div class="ic" style="background:rgba(52,199,89,.16);color:#34c759"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="7" width="10" height="10" rx="2.4"/><path d="M10 2v3M14 2v3M10 19v3M14 19v3M2 10h3M2 14h3M19 10h3M19 14h3"/></svg></div><h3>CPU, per cluster</h3><p>Overall load plus the efficiency and performance clusters, split out, and every core.</p></div>
-    <div class="card"><div class="ic" style="background:rgba(255,204,0,.16);color:#ffcc00"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="6" width="19" height="12" rx="2.6"/><circle cx="9" cy="12" r="2.6"/><path d="M15 10.5h4M15 13.5h4"/></svg></div><h3>GPU, calibrated</h3><p>Utilization from the hardware's performance-state residency, calibrated against <code>powermetrics</code>.</p></div>
-    <div class="card"><div class="ic" style="background:rgba(10,132,255,.16);color:#0a84ff"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="9" rx="1.8"/><path d="M6.5 8V5.5M11 8V5.5M15.5 8V5.5M7 12v2M12 12v2M17 12v2"/></svg></div><h3>Memory &amp; power</h3><p>Memory used against total, and power in watts per rail, CPU and GPU, from the chip's energy counters.</p></div>
-    <div class="card"><div class="ic" style="background:rgba(191,90,242,.16);color:#bf5af2"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.5 3.8 5.7 3.8 9S14.5 18.5 12 21c-2.5-2.5-3.8-5.7-3.8-9S9.5 5.5 12 3Z"/></svg></div><h3>Network, disk, battery</h3><p>Throughput up and down, read and write with free space, and charge.</p></div>
-    <div class="card"><div class="ic" style="background:rgba(255,159,10,.16);color:#ff9f0a"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M14 14.8V5a2 2 0 0 0-4 0v9.8a4 4 0 1 0 4 0Z"/></svg></div><h3>Temperature &amp; fan</h3><p>SoC temperature and fan speed from the SMC, with task traces that measure what a build cost.</p></div>
-    <div class="card"><div class="ic" style="background:rgba(52,199,89,.16);color:#34c759"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 17l6-6 4 4 6-8"/></svg></div><h3>History you keep</h3><p>Charted from one minute to a year, persisted to disk, so every range survives a quit.</p></div>
+    <div class="inst reveal" id="inst" aria-hidden="true">
+      <div class="bar">
+        <span class="l"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="7" width="10" height="10" rx="2.4"/><path d="M10 2v3M14 2v3M10 19v3M14 19v3M2 10h3M2 14h3M19 10h3M19 14h3"/></svg>Mac Vitals</span>
+        <span class="sp"></span>
+        <span class="mono" id="mb-read">cpu 00 · gpu 00</span>
+        <span class="live">● LIVE</span>
+      </div>
+      <div class="chartbox"><canvas id="stream"></canvas></div>
+      <div class="rings">
+        <div class="gaugecell">
+          <div class="ring"><svg width="74" height="74" viewBox="0 0 74 74"><circle cx="37" cy="37" r="31" fill="none" stroke="rgba(255,255,255,.09)" stroke-width="7"/><circle id="r-cpu" cx="37" cy="37" r="31" fill="none" stroke="#30d158" stroke-width="7" stroke-linecap="round" stroke-dasharray="195" stroke-dashoffset="195"/></svg><div class="num" id="n-cpu" style="color:#30d158">0<u>%</u></div></div>
+          <div class="lab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="7" width="10" height="10" rx="2.4"/><path d="M10 2v3M14 2v3M10 19v3M14 19v3M2 10h3M2 14h3M19 10h3M19 14h3"/></svg>CPU</div>
+          <div class="sub" id="s-cpu">E 0 · P 0</div>
+        </div>
+        <div class="gaugecell">
+          <div class="ring"><svg width="74" height="74" viewBox="0 0 74 74"><circle cx="37" cy="37" r="31" fill="none" stroke="rgba(255,255,255,.09)" stroke-width="7"/><circle id="r-gpu" cx="37" cy="37" r="31" fill="none" stroke="#ffd426" stroke-width="7" stroke-linecap="round" stroke-dasharray="195" stroke-dashoffset="195"/></svg><div class="num" id="n-gpu" style="color:#ffd426">0<u>%</u></div></div>
+          <div class="lab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="6" width="19" height="12" rx="2.6"/><circle cx="9" cy="12" r="2.6"/><path d="M15 10.5h4M15 13.5h4"/></svg>GPU</div>
+          <div class="sub">calibrated</div>
+        </div>
+        <div class="gaugecell">
+          <div class="ring"><svg width="74" height="74" viewBox="0 0 74 74"><circle cx="37" cy="37" r="31" fill="none" stroke="rgba(255,255,255,.09)" stroke-width="7"/><circle id="r-mem" cx="37" cy="37" r="31" fill="none" stroke="#0a84ff" stroke-width="7" stroke-linecap="round" stroke-dasharray="195" stroke-dashoffset="195"/></svg><div class="num" id="n-mem" style="color:#4aa8ff">0<u>%</u></div></div>
+          <div class="lab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="9" rx="1.8"/><path d="M6.5 8V5.5M11 8V5.5M15.5 8V5.5M7 12v2M12 12v2M17 12v2"/></svg>Memory</div>
+          <div class="sub">14.2 / 24 GB</div>
+        </div>
+      </div>
+      <div class="foot">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--amber)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 4 14h7l-1 8 9-12h-7l1-8Z"/></svg>
+        <span class="w" style="color:var(--amber)" id="n-pwr">0.0<u>W</u></span>
+        <span class="split"><span>CPU <b id="p-cpu">0.0</b></span><span>GPU <b id="p-gpu">0.0</b></span></span>
+      </div>
+    </div>
+  </div>
+</header>
+
+<div class="wrap"><div class="rule"></div></div>
+
+<!-- METRICS -->
+<section id="metrics"><div class="wrap">
+  <div class="headrow reveal">
+    <h2>Everything the chip measures, read as you.</h2>
+    <p class="say">No <code>sudo</code>, no helper daemon, no kernel extension. It all comes through Apple's own interfaces, from Mach and IOReport to the SMC.</p>
+  </div>
+  <div class="band reveal">
+    <div class="row">
+      <div class="cellx"><div class="top"><svg viewBox="0 0 24 24" fill="none" stroke="#30d158" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="7" width="10" height="10" rx="2.4"/><path d="M10 2v3M14 2v3M10 19v3M14 19v3M2 10h3M2 14h3M19 10h3M19 14h3"/></svg>CPU</div><div class="big" style="color:#30d158">42<u>%</u></div><div class="note">overall · E and P clusters · every core</div><div class="track"><b data-w="42" style="background:#30d158"></b></div></div>
+      <div class="cellx"><div class="top"><svg viewBox="0 0 24 24" fill="none" stroke="#ffd426" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="6" width="19" height="12" rx="2.6"/><circle cx="9" cy="12" r="2.6"/><path d="M15 10.5h4M15 13.5h4"/></svg>GPU</div><div class="big" style="color:#ffd426">71<u>%</u></div><div class="note">performance-state residency, calibrated</div><div class="track"><b data-w="71" style="background:#ffd426"></b></div></div>
+      <div class="cellx"><div class="top"><svg viewBox="0 0 24 24" fill="none" stroke="#4aa8ff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="9" rx="1.8"/><path d="M6.5 8V5.5M11 8V5.5M15.5 8V5.5M7 12v2M12 12v2M17 12v2"/></svg>Memory</div><div class="big" style="color:#4aa8ff">59<u>%</u></div><div class="note">used against total, the way the OS counts</div><div class="track"><b data-w="59" style="background:#4aa8ff"></b></div></div>
+    </div>
+    <div class="row">
+      <div class="cellx"><div class="top"><svg viewBox="0 0 24 24" fill="none" stroke="#ff9f0a" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 4 14h7l-1 8 9-12h-7l1-8Z"/></svg>Power</div><div class="big mono" style="color:#ff9f0a">21.1<u>W</u></div><div class="note">per rail, from the chip's energy counters</div><div class="track"><b data-w="55" style="background:#ff9f0a"></b></div></div>
+      <div class="cellx"><div class="top"><svg viewBox="0 0 24 24" fill="none" stroke="#ff6b5e" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M14 14.8V5a2 2 0 0 0-4 0v9.8a4 4 0 1 0 4 0Z"/></svg>Temperature</div><div class="big mono" style="color:#ff6b5e">46<u>°C</u></div><div class="note">SoC die average, plus fan RPM, from the SMC</div><div class="track"><b data-w="46" style="background:#ff6b5e"></b></div></div>
+      <div class="cellx"><div class="top"><svg viewBox="0 0 24 24" fill="none" stroke="#64d2ff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.5 3.8 5.7 3.8 9S14.5 18.5 12 21"/></svg>Network &amp; disk</div><div class="big mono" style="color:#64d2ff">2.4<u>MB/s</u></div><div class="note">throughput up and down, read and write</div><div class="track"><b data-w="34" style="background:#64d2ff"></b></div></div>
+    </div>
   </div>
 </div></section>
 
-<section style="padding-top:0"><div class="wrap">
-  <div class="split reverse">
-    <div class="txt">
-      <div class="kicker">The full window</div>
-      <h2>From the last minute to a full year</h2>
-      <p class="sec-lede">Every metric charted over a range you pick, plus year-to-date. Three resolutions kept on disk, so the long views fill in over time instead of starting blank.</p>
+<div class="wrap"><div class="rule"></div></div>
+
+<!-- GPU CALIBRATION -->
+<section id="gpu"><div class="wrap">
+  <div class="reveal">
+    <h2>The GPU number you can trust.</h2>
+    <p class="say">Most tools guess at GPU load. Mac Vitals reads it from the hardware's own performance-state residency and <strong style="color:var(--ink)">calibrates it against <code>powermetrics</code></strong> on the M5. Under a sustained Metal load, both read 100%. At idle, both read the sliver the compositor keeps awake.</p>
+  </div>
+  <div class="calib">
+    <div class="plot reveal">
+      <div class="legend"><span><i style="background:#30d158"></i>Mac Vitals</span><span><i style="background:#8a8f9c;border:none;height:0;border-top:2px dashed #8a8f9c"></i>powermetrics</span></div>
+      <svg id="calplot" viewBox="0 0 520 220" width="100%" preserveAspectRatio="none" aria-label="Mac Vitals GPU utilization tracking powermetrics over time"></svg>
+    </div>
+    <div class="reveal">
       <ul>
-        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Per-second detail, minute averages, hour averages</li>
-        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>A few MB in all, survives restarts</li>
-        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Light and dark, on native vibrancy</li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><span><code>usage = 1 − OFF/total</code>, from state residency</span></li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><span>GPU power in watts is exact, not inferred</span></li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><span>The private symbols live in one file, so a macOS change fails in one obvious place</span></li>
       </ul>
     </div>
-    <img src="window.png" alt="The Mac Vitals window charting CPU, GPU, memory, power, network, and disk over a selectable range" width="520" height="386" loading="lazy">
   </div>
 </div></section>
 
-<section id="install" style="padding-top:0"><div class="wrap">
-  <div class="kicker">Install</div>
-  <h2>Build it in a minute</h2>
-  <p class="sec-lede">Needs macOS 14 or later on Apple Silicon and the Xcode Command Line Tools. Not yet notarized, so build from source for now.</p>
-  <div class="code">
-<span class="c"># clone and build the app</span><br>
-git clone https://github.com/netsatsawat/mac-vitals.git<br>
-cd mac-vitals<br>
-./scripts/build-app.sh<br>
-open build/MacVitals.app<br>
-</div>
-</div></section>
+<div class="wrap"><div class="rule"></div></div>
 
-<section id="agent" style="padding-top:0"><div class="wrap">
-  <div class="split">
-    <div class="txt">
-      <div class="kicker">For your AI agent</div>
-      <h2>The same engine speaks MCP</h2>
-      <p class="sec-lede">Mac Vitals runs as a read-only <a href="https://modelcontextprotocol.io" style="color:var(--blue)">Model Context Protocol</a> server over stdio. Your coding agent can read the machine, and wrap its own build in a trace to see what it cost.</p>
-      <ul>
-        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><code>get_vitals</code> and <code>get_vitals_history</code></li>
-        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><code>start_trace</code> and <code>stop_trace</code> for energy and cost</li>
-        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Read-only. It sees the machine, never changes it.</li>
-      </ul>
+<!-- HISTORY -->
+<section id="history"><div class="wrap showcase">
+  <div class="reveal">
+    <h2 style="margin:0 auto">From the last minute to a full year.</h2>
+    <p class="say" style="margin:16px auto 0">Every metric charted over a range you pick, plus year-to-date. Three resolutions kept on disk, so the long views fill in over time instead of starting blank. A few MB in all, and every range survives a quit.</p>
+    <div class="rangebar" aria-hidden="true">
+      <span>1m</span><span>15m</span><span>1h</span><span>24h</span><span class="on">7d</span><span>30d</span><span>90d</span><span>1y</span><span>YTD</span>
     </div>
-    <div class="code" style="margin-top:0">
-<span class="c"># add it to Claude Code</span><br>
-claude mcp add mac-vitals -- \<br>
-&nbsp;&nbsp;/path/to/.build/release/vitals --mcp<br>
-</div>
+  </div>
+  <div class="frame reveal">
+    <img src="window.png" alt="The Mac Vitals full window charting CPU, GPU, memory, power, network, and disk over a selectable range" width="960" height="712" loading="lazy">
   </div>
 </div></section>
 
-<section style="padding-top:0"><div class="wrap">
-  <div class="kicker">How it compares</div>
-  <h2>A free, native alternative</h2>
-  <p class="sec-lede">A free and open-source alternative to iStat Menus, and a native-feeling companion to stats and macmon. It competes on the native look, the floating widget, and an interface an agent can read.</p>
-  <div class="tablewrap"><table>
+<div class="wrap"><div class="rule"></div></div>
+
+<!-- AGENT -->
+<section id="agent"><div class="wrap">
+  <div class="agent">
+    <div class="reveal">
+      <h2>Your coding agent can read the machine.</h2>
+      <p class="say">The same engine runs as a read-only <a href="https://modelcontextprotocol.io" style="color:var(--teal)">Model Context Protocol</a> server over stdio. An agent can check load before a heavy job, or wrap its own build in a trace and get the energy and resource cost back. It sees the machine. It never changes it.</p>
+      <div class="cta" style="margin-top:26px">
+        <a class="btn ghost" href="https://github.com/netsatsawat/mac-vitals/blob/main/docs/MCP.md">Read the MCP guide</a>
+      </div>
+    </div>
+    <div class="term reveal" id="term">
+      <div class="tbar"><i></i><i></i><i></i><span>vitals --mcp</span></div>
+      <pre id="termout" aria-hidden="true"></pre>
+    </div>
+  </div>
+</div></section>
+
+<div class="wrap"><div class="rule"></div></div>
+
+<!-- COMPARE -->
+<section><div class="wrap">
+  <div class="reveal">
+    <h2>A free, native alternative.</h2>
+    <p class="say">Open source and free, an alternative to iStat Menus and a native-feeling companion to stats and macmon. It competes on the native look, the floating widget, and an interface an agent can read.</p>
+  </div>
+  <div class="tablewrap reveal"><table>
     <thead><tr><th>&nbsp;</th><th class="us">Mac Vitals</th><th>stats</th><th>macmon</th><th>iStat Menus</th></tr></thead>
     <tbody>
-      <tr><td>Reads without sudo</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td></tr>
-      <tr><td>Native menu-bar item</td><td class="yes">✓</td><td class="yes">✓</td><td class="no">–</td><td class="yes">✓</td></tr>
-      <tr><td>Floating desktop widget</td><td class="yes">✓</td><td class="no">–</td><td class="no">–</td><td>partial</td></tr>
-      <tr><td>Agent-readable (MCP)</td><td class="yes">✓</td><td class="no">–</td><td class="no">–</td><td class="no">–</td></tr>
-      <tr><td>Zero dependencies</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td><td class="no">–</td></tr>
-      <tr><td>Open source</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td><td class="no">–</td></tr>
-      <tr><td>Price</td><td class="yes">free</td><td>free</td><td>free</td><td>paid</td></tr>
+      <tr><td>Reads without sudo</td><td class="usc yes">✓</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td></tr>
+      <tr><td>Native menu-bar item</td><td class="usc yes">✓</td><td class="yes">✓</td><td class="no">·</td><td class="yes">✓</td></tr>
+      <tr><td>Floating desktop widget</td><td class="usc yes">✓</td><td class="no">·</td><td class="no">·</td><td>partial</td></tr>
+      <tr><td>Agent-readable (MCP)</td><td class="usc yes">✓</td><td class="no">·</td><td class="no">·</td><td class="no">·</td></tr>
+      <tr><td>Zero dependencies</td><td class="usc yes">✓</td><td class="yes">✓</td><td class="yes">✓</td><td class="no">·</td></tr>
+      <tr><td>Open source</td><td class="usc yes">✓</td><td class="yes">✓</td><td class="yes">✓</td><td class="no">·</td></tr>
+      <tr><td>Price</td><td class="usc yes price">free</td><td class="price">free</td><td class="price">free</td><td class="price">paid</td></tr>
     </tbody>
   </table></div>
 </div></section>
 
+<!-- CLOSE -->
+<section class="close" id="install"><div class="wrap">
+  <h2 class="reveal">Build it in a minute.</h2>
+  <p class="say reveal" style="margin:16px auto 0">macOS 14 or later on Apple Silicon, and the Xcode Command Line Tools.</p>
+  <div class="term reveal" style="max-width:600px;margin:34px auto 0;text-align:left">
+    <div class="tbar"><i></i><i></i><i></i><span>zsh</span></div>
+    <pre style="min-height:auto"><span class="cm"># clone, build, and open</span>
+<span class="pr">$</span> git clone https://github.com/netsatsawat/mac-vitals.git
+<span class="pr">$</span> cd mac-vitals
+<span class="pr">$</span> ./scripts/build-app.sh
+<span class="pr">$</span> open build/MacVitals.app</pre>
+  </div>
+  <div class="cta reveal">
+    <a class="btn primary" href="https://github.com/netsatsawat/mac-vitals">Get it on GitHub</a>
+    <a class="btn ghost" href="https://github.com/netsatsawat/mac-vitals/blob/main/docs/WALKTHROUGH.md">Read the walkthrough</a>
+  </div>
+</div></section>
+
 <footer><div class="wrap">
-  <span>© 2026 Net Satsawat · MIT licensed</span>
+  <span>© 2026 Net Satsawat · MIT</span>
   <span class="sp"></span>
   <a href="https://github.com/netsatsawat/mac-vitals">GitHub</a>
   <a href="https://github.com/netsatsawat/mac-vitals/blob/main/docs/WALKTHROUGH.md">Walkthrough</a>
@@ -258,5 +435,209 @@ claude mcp add mac-vitals -- \<br>
   <a href="https://github.com/netsatsawat/mac-vitals/releases">Releases</a>
 </div></footer>
 
+<script>
+(function(){
+  "use strict";
+  var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  /* ---------- reveal on scroll (enhancement; content visible without JS) ---------- */
+  var revs = [].slice.call(document.querySelectorAll(".reveal"));
+  function revealNow(el){ el.classList.add("in"); }
+  if (reduce || !("IntersectionObserver" in window)) {
+    revs.forEach(revealNow);
+  } else {
+    var io = new IntersectionObserver(function(es){
+      es.forEach(function(e){ if(e.isIntersecting){ revealNow(e.target); io.unobserve(e.target); } });
+    }, { threshold: .14, rootMargin: "0px 0px -6% 0px" });
+    var vh = window.innerHeight || 800;
+    revs.forEach(function(el){
+      // Anything in or near the first view shows immediately, so the page is
+      // never blank at rest; the rest animate in as they are scrolled to.
+      if (el.getBoundingClientRect().top < vh * 0.95) revealNow(el);
+      else io.observe(el);
+    });
+    // Failsafe: if the observer never fires (throttled, hidden tab, older engine),
+    // reveal any stragglers rather than leave content invisible.
+    setTimeout(function(){ revs.forEach(function(el){ if(!el.classList.contains("in")) revealNow(el); }); }, 3000);
+  }
+
+  /* ---------- shared helpers ---------- */
+  function lerp(a,b,t){ return a+(b-a)*t; }
+  function loadColor(p){
+    var s=[[0,[48,209,88]],[55,[48,209,88]],[72,[255,212,38]],[86,[255,159,10]],[100,[255,69,58]]];
+    for(var i=0;i<s.length-1;i++){var a=s[i],b=s[i+1];if(p<=b[0]){var t=(p-a[0])/((b[0]-a[0])||1);var c=a[1].map(function(v,k){return Math.round(v+(b[1][k]-v)*t)});return "rgb("+c[0]+","+c[1]+","+c[2]+")";}}
+    return "rgb(255,69,58)";
+  }
+  var C=2*Math.PI*31; // ring circumference
+
+  /* ---------- hero: the live instrument (focal moment) ---------- */
+  (function(){
+    var cv=document.getElementById("stream"); if(!cv) return;
+    var ctx=cv.getContext("2d"), W=0,H=0,dpr=Math.min(window.devicePixelRatio||1,2);
+    function resize(){ var b=cv.getBoundingClientRect(); W=b.width; H=b.height; cv.width=W*dpr; cv.height=H*dpr; ctx.setTransform(dpr,0,0,dpr,0,0); }
+    resize(); window.addEventListener("resize", resize);
+
+    var N=120, cpu=[], gpu=[], i;
+    var cpuV=42, gpuV=64, memV=59, pwr=21.1, tCpu=42,tGpu=64,tMem=59,tPwr=21.1;
+    for(i=0;i<N;i++){ cpu.push(cpuV); gpu.push(gpuV); }
+
+    // ring + number elements
+    var rCpu=document.getElementById("r-cpu"), rGpu=document.getElementById("r-gpu"), rMem=document.getElementById("r-mem");
+    var nCpu=document.getElementById("n-cpu"), nGpu=document.getElementById("n-gpu"), nMem=document.getElementById("n-mem");
+    var sCpu=document.getElementById("s-cpu"), nPwr=document.getElementById("n-pwr"), pCpu=document.getElementById("p-cpu"), pGpu=document.getElementById("p-gpu");
+    var mbRead=document.getElementById("mb-read");
+    [rCpu,rGpu,rMem].forEach(function(r){ if(r) r.style.transition="stroke-dashoffset .9s cubic-bezier(.16,1,.3,1), stroke .6s"; });
+
+    function setRing(r,n,val,colored){ if(!r)return; var off=C*(1-val/100); r.setAttribute("stroke-dashoffset",off); if(colored){var c=loadColor(val); r.setAttribute("stroke",c); if(n)n.style.color=c;} if(n) n.innerHTML=Math.round(val)+'<u>%</u>'; }
+
+    function draw(){
+      ctx.clearRect(0,0,W,H);
+      // baseline grid
+      ctx.strokeStyle="rgba(255,255,255,.05)"; ctx.lineWidth=1;
+      for(var g=1;g<4;g++){ var y=H*g/4; ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke(); }
+      drawSeries(gpu, "rgba(255,212,38,", 0.16);
+      drawSeries(cpu, "rgba(48,209,88,", 0.22);
+    }
+    function drawSeries(arr, rgb, fillA){
+      var n=arr.length, stepX=W/(n-1);
+      ctx.beginPath();
+      for(var i=0;i<n;i++){ var x=i*stepX, y=H-(arr[i]/100)*(H-10)-5; if(i===0)ctx.moveTo(x,y); else ctx.lineTo(x,y); }
+      // area
+      ctx.lineTo(W,H); ctx.lineTo(0,H); ctx.closePath();
+      var grad=ctx.createLinearGradient(0,0,0,H); grad.addColorStop(0,rgb+fillA+")"); grad.addColorStop(1,rgb+"0)");
+      ctx.fillStyle=grad; ctx.fill();
+      // line
+      ctx.beginPath();
+      for(var j=0;j<n;j++){ var xx=j*stepX, yy=H-(arr[j]/100)*(H-10)-5; if(j===0)ctx.moveTo(xx,yy); else ctx.lineTo(xx,yy); }
+      ctx.strokeStyle=rgb+"1)"; ctx.lineWidth=2; ctx.lineJoin="round"; ctx.stroke();
+      // head dot
+      var hx=(n-1)*stepX, hy=H-(arr[n-1]/100)*(H-10)-5;
+      ctx.beginPath(); ctx.arc(hx,hy,3,0,7); ctx.fillStyle=rgb+"1)"; ctx.fill();
+    }
+
+    var frame=0, last=0, retargetEvery=64;
+    function tick(ts){
+      frame++;
+      if(frame%retargetEvery===0){
+        tCpu=Math.max(6,Math.min(96, tCpu+(Math.random()-.5)*46));
+        tGpu=Math.max(4,Math.min(98, tGpu+(Math.random()-.5)*54));
+        tMem=Math.max(45,Math.min(78, tMem+(Math.random()-.5)*10));
+        tPwr=6+ (tCpu*0.12)+(tGpu*0.14)+ (Math.random()*2);
+      }
+      cpuV=lerp(cpuV,tCpu,.05); gpuV=lerp(gpuV,tGpu,.05); memV=lerp(memV,tMem,.04); pwr=lerp(pwr,tPwr,.05);
+      cpu.push(cpuV); cpu.shift(); gpu.push(gpuV); gpu.shift();
+      draw();
+      // update readouts ~6/s
+      if(ts-last>150){
+        last=ts;
+        setRing(rCpu,nCpu,cpuV,true); setRing(rGpu,nGpu,gpuV,true); setRing(rMem,nMem,memV,false);
+        if(sCpu) sCpu.textContent="E "+Math.round(cpuV*0.42)+" · P "+Math.round(Math.min(100,cpuV*1.35));
+        if(nPwr) nPwr.innerHTML=pwr.toFixed(1)+'<u>W</u>';
+        if(pCpu) pCpu.textContent=(pwr*0.55).toFixed(1);
+        if(pGpu) pGpu.textContent=(pwr*0.45).toFixed(1);
+        if(mbRead) mbRead.textContent="cpu "+Math.round(cpuV)+" · gpu "+Math.round(gpuV);
+      }
+      raf=requestAnimationFrame(tick);
+    }
+
+    var raf=null;
+    function start(){ if(!raf) raf=requestAnimationFrame(tick); }
+    function stop(){ if(raf){ cancelAnimationFrame(raf); raf=null; } }
+
+    if(reduce){
+      // static, complete state
+      for(i=0;i<N;i++){ cpu[i]=30+Math.round(28*Math.sin(i/13)); gpu[i]=52+Math.round(30*Math.sin(i/17+1)); }
+      draw();
+      setRing(rCpu,nCpu,42,true); setRing(rGpu,nGpu,71,true); setRing(rMem,nMem,59,false);
+      if(sCpu)sCpu.textContent="E 18 · P 66"; if(nPwr)nPwr.innerHTML='21.1<u>W</u>'; if(pCpu)pCpu.textContent="11.6"; if(pGpu)pGpu.textContent="9.5"; if(mbRead)mbRead.textContent="cpu 42 · gpu 71";
+    } else {
+      // pause when the hero is offscreen or the tab is hidden
+      var vis=true, onscreen=true;
+      document.addEventListener("visibilitychange", function(){ vis=!document.hidden; (vis&&onscreen)?start():stop(); });
+      if("IntersectionObserver" in window){
+        new IntersectionObserver(function(es){ onscreen=es[0].isIntersecting; (vis&&onscreen)?start():stop(); },{threshold:0}).observe(cv);
+      }
+      start();
+    }
+  })();
+
+  /* ---------- GPU calibration plot (draws once on reveal) ---------- */
+  (function(){
+    var svg=document.getElementById("calplot"); if(!svg) return;
+    var W=520,H=220, pad=6;
+    // a load ramp: idle, spike to 100 under Metal load, settle
+    var pts=[]; for(var i=0;i<=60;i++){ var x=i/60; var v; if(x<.16)v=6+Math.random()*3; else if(x<.24)v=6+(x-.16)/.08*92; else if(x<.7)v=97+Math.sin(i)*2; else if(x<.78)v=98-(x-.7)/.08*70; else v=12+Math.sin(i)*3; pts.push(Math.max(3,Math.min(100,v))); }
+    function path(arr,jitter){
+      var d=""; for(var i=0;i<arr.length;i++){ var x=pad+(W-2*pad)*i/(arr.length-1); var val=arr[i]+(jitter?(Math.random()-.5)*3:0); var y=H-pad-(val/100)*(H-2*pad); d+=(i?"L":"M")+x.toFixed(1)+" "+y.toFixed(1)+" "; } return d;
+    }
+    var NS="http://www.w3.org/2000/svg";
+    // grid
+    for(var g=0;g<=4;g++){ var ln=document.createElementNS(NS,"line"); var y=pad+(H-2*pad)*g/4; ln.setAttribute("x1",pad);ln.setAttribute("x2",W-pad);ln.setAttribute("y1",y);ln.setAttribute("y2",y); ln.setAttribute("stroke","rgba(255,255,255,.06)"); ln.setAttribute("stroke-width","1"); svg.appendChild(ln); }
+    var pm=document.createElementNS(NS,"path"); pm.setAttribute("d",path(pts,true)); pm.setAttribute("fill","none"); pm.setAttribute("stroke","#8a8f9c"); pm.setAttribute("stroke-width","1.5"); pm.setAttribute("stroke-dasharray","5 5"); pm.setAttribute("stroke-linecap","round"); pm.setAttribute("stroke-linejoin","round"); svg.appendChild(pm);
+    var mv=document.createElementNS(NS,"path"); mv.setAttribute("d",path(pts,false)); mv.setAttribute("fill","none"); mv.setAttribute("stroke","#30d158"); mv.setAttribute("stroke-width","2.4"); mv.setAttribute("stroke-linecap","round"); mv.setAttribute("stroke-linejoin","round"); svg.appendChild(mv);
+    if(!reduce){
+      var len=mv.getTotalLength(); mv.style.strokeDasharray=len; mv.style.strokeDashoffset=len;
+      pm.style.opacity=0; pm.style.transition="opacity .8s ease .5s";
+      if("IntersectionObserver" in window){
+        new IntersectionObserver(function(es,ob){ if(es[0].isIntersecting){ mv.style.transition="stroke-dashoffset 1.5s cubic-bezier(.16,1,.3,1)"; mv.style.strokeDashoffset=0; pm.style.opacity=1; ob.disconnect(); } },{threshold:.4}).observe(svg);
+      } else { mv.style.strokeDashoffset=0; pm.style.opacity=1; }
+    }
+  })();
+
+  /* ---------- metric bars fill on reveal ---------- */
+  (function(){
+    var band=document.querySelector(".band"); if(!band) return;
+    function fill(){ [].slice.call(band.querySelectorAll(".track b")).forEach(function(b){ b.style.transform="scaleX("+((+b.getAttribute("data-w")||0)/100)+")"; }); }
+    if(reduce || !("IntersectionObserver" in window)){ fill(); return; }
+    new IntersectionObserver(function(es,ob){ if(es[0].isIntersecting){ fill(); ob.disconnect(); } },{threshold:.3}).observe(band);
+  })();
+
+  /* ---------- agent terminal typing ---------- */
+  (function(){
+    var pre=document.getElementById("termout"); if(!pre) return;
+    var lines=[
+      {t:"$ ", c:"pr"},{t:"claude mcp add mac-vitals -- vitals --mcp\n"},
+      {t:"✓ connected · 4 tools\n\n", c:"cm"},
+      {t:"› ", c:"pr"},{t:"get_vitals\n", c:"k"},
+      {t:'{\n  "cpu":  { "usage": ', c:"fl"},{t:"42.1", c:"n"},{t:', "e": 18, "p": 66 },\n', c:"fl"},
+      {t:'  "gpu":  { "usage": ', c:"fl"},{t:"71.0", c:"n"},{t:', "calibrated": true },\n', c:"fl"},
+      {t:'  "power":{ "watts": ', c:"fl"},{t:"21.1", c:"n"},{t:' },\n', c:"fl"},
+      {t:'  "soc":  { "tempC": ', c:"fl"},{t:"46", c:"n"},{t:' }\n}\n', c:"fl"}
+    ];
+    var full=lines.map(function(l){return l.t;}).join("");
+    function render(txt){
+      // simple span-less render for reduced motion, colored render otherwise handled by building html
+      pre.textContent=txt;
+    }
+    if(reduce || !("IntersectionObserver" in window)){
+      // full colored output
+      pre.innerHTML=lines.map(function(l){ return l.c?'<span class="'+l.c+'">'+esc(l.t)+'</span>':esc(l.t); }).join("");
+      return;
+    }
+    function esc(s){ return s.replace(/&/g,"&amp;").replace(/</g,"&lt;"); }
+    function renderFull(){ pre.innerHTML=lines.map(function(l){return l.c?'<span class="'+l.c+'">'+esc(l.t)+'</span>':esc(l.t);}).join(""); }
+    var started=false;
+    // Failsafe: if the terminal is never scrolled into view or the observer is
+    // throttled, show the full output rather than an empty box.
+    setTimeout(function(){ if(!started){ started=true; renderFull(); } }, 4000);
+    new IntersectionObserver(function(es,ob){
+      if(!es[0].isIntersecting||started) return; started=true; ob.disconnect();
+      var li=0, ci=0, html="";
+      var caret='<span class="caret"></span>';
+      (function type(){
+        if(li>=lines.length){ pre.innerHTML=lines.map(function(l){return l.c?'<span class="'+l.c+'">'+esc(l.t)+'</span>':esc(l.t);}).join(""); return; }
+        var l=lines[li], ch=l.t.charAt(ci); ci++;
+        if(ci>l.t.length){ li++; ci=0; }
+        // rebuild html up to current point
+        var out="", k;
+        for(k=0;k<li;k++){ out+= lines[k].c?'<span class="'+lines[k].c+'">'+esc(lines[k].t)+'</span>':esc(lines[k].t); }
+        if(li<lines.length){ var partial=lines[li].t.slice(0,ci); out+= lines[li].c?'<span class="'+lines[li].c+'">'+esc(partial)+'</span>':esc(partial); }
+        pre.innerHTML=out+caret;
+        setTimeout(type, ch==="\n"?90:(14+Math.random()*22));
+      })();
+    },{threshold:.35}).observe(document.getElementById("term"));
+  })();
+})();
+</script>
 </body>
 </html>
