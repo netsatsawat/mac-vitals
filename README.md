@@ -32,10 +32,10 @@ It shows up three ways, over one engine:
 
 - **CPU** overall, plus the efficiency and performance clusters split out, plus every core.
 - **GPU** utilization from the hardware's own performance-state residency.
-- **Memory** used against total, the way Activity Monitor counts it.
-- **Power** in watts, per rail: CPU and GPU, read from the chip's energy counters.
+- **Memory** used against total the way Activity Monitor counts it, plus the memory-pressure level, swap in use, and how much of it the GPU may use, which is the practical limit for fitting a local model.
+- **Power** in watts, per rail: CPU, GPU, and the Neural Engine, read from the chip's energy counters.
 - **Network, disk, and battery** too: up and down throughput, read and write activity with free space, and charge.
-- **Temperature and fan** from the SMC, and **task traces** that measure what a build or run cost (CPU, GPU, watt-hours, bytes moved) in the app, the CLI, and over MCP.
+- **Temperature, fan, and throttling** from the SMC and the OS thermal state, so you can see when a long run is being thermally limited, plus **task traces** that measure what a build or run cost (CPU, GPU, watt-hours, bytes moved) in the app, the CLI, and over MCP.
 - **A full window** with every metric charted from the last minute to a full year, plus year-to-date, with all three resolutions persisted so every range picks up where it left off and the long ranges fill in over time.
 - **No password, ever.** Everything comes through Apple's IOReport interface as a normal user.
 - **Zero dependencies.** One Swift package, no runtime, no helper daemon, no kernel extension.
@@ -114,7 +114,7 @@ Two tools are exposed:
 
 | Tool | What it returns |
 | --- | --- |
-| `get_vitals` | One live reading: CPU (overall plus E and P clusters), GPU, memory, power, network, disk, battery, temperature. |
+| `get_vitals` | One live reading: CPU (overall plus E and P clusters), GPU, memory (with pressure, swap, and the GPU memory ceiling), power per rail including the Neural Engine, network, disk, battery, and temperature with a throttling state. |
 | `get_vitals_history` | Per-second history for up to the last 60 seconds of CPU%, GPU%, memory%, and watts. |
 | `start_trace` / `stop_trace` | Bracket a task. `stop_trace` returns what it cost: CPU and GPU average and peak, average watts and energy in watt-hours, network and disk totals, and peak temperature. |
 
@@ -166,6 +166,7 @@ If you want the most features today, `stats` is excellent. Mac Vitals is for peo
 - [x] Task traces (app, CLI, and MCP)
 - [x] Temperature and fan (SMC)
 - [x] Launch at Login, off by default, with a first-run opt-in
+- [x] Neural Engine power, memory-fit signals (pressure, swap, GPU ceiling), and a throttling indicator
 - [ ] Per-process attribution (what is using the machine)
 - [ ] Notarized release and a Homebrew cask
 

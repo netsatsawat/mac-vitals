@@ -6,18 +6,40 @@ All notable changes to this project are recorded here. The format follows
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-09-09
+
+Metrics for people running local models, plus the always-on and distribution
+work. Everything still reads as a normal user, with no `sudo`.
+
 ### Added
+- **Neural Engine (ANE) power**, from the Energy Model. Near zero for GPU-based
+  LLMs, which itself confirms a run is on the GPU and not the ANE.
+- **Memory-fit signals**: the OS memory-pressure level, swap in use, and how
+  much memory the GPU may use (Metal's recommended working-set size). Together
+  they answer "will this local model fit, and why did generation slow down."
+- **Thermal throttling**: the OS thermal-pressure state, shown as a throttling
+  indicator in the popover, the window, and the CLI. Sustained inference is
+  exactly when this matters.
 - Launch at Login, off by default, in the popover's `⋯` menu, with a one-time
-  opt-in hint on first open. Registered through `SMAppService`, so there is no
-  helper and no privileged step, and the app never starts itself unasked.
-  Diagnostic flags (`--login-status`, `--login-register`, `--login-unregister`)
-  verify the registration from the terminal.
+  opt-in hint on first open. Registered through `SMAppService`, no helper and no
+  privileged step. Diagnostic flags (`--login-status`, `--login-register`,
+  `--login-unregister`) verify the registration from the terminal.
 - A "Show Menu Bar Icon" toggle in the `⋯` menu, on by default. Turn it off and
-  the app keeps recording with no icon and no interface, after a plain
-  explanation of what that means. Reopening the app brings the icon back. Pairs
-  with Launch at Login for a quiet always-on recorder.
-- A full walkthrough in [docs/WALKTHROUGH.md](docs/WALKTHROUGH.md) covering every
-  surface from install to the MCP interface.
+  the app keeps recording with no icon, after a plain explanation. Reopening the
+  app brings the icon back. Pairs with Launch at Login for a quiet recorder.
+- A full walkthrough in [docs/WALKTHROUGH.md](docs/WALKTHROUGH.md) and a project
+  site at [netsatsawat.github.io/mac-vitals](https://netsatsawat.github.io/mac-vitals/).
+- `--dump-ioreport`, a diagnostic that lists every IOReport channel, for
+  discovering private channels across chip generations.
+
+### Changed
+- The popover's status pill now reflects the real memory and thermal pressure
+  ("Normal", "Elevated", "Throttling", "Critical") instead of a fixed label.
+
+### Investigated and dropped
+- DRAM memory bandwidth. The `AMC Stats` counters that carry it do not bind for
+  a normal user, so reading them would require `sudo`. The project will not, so
+  bandwidth is out until there is a password-free path to it.
 
 ## [0.1.0] - 2026-09-08
 
