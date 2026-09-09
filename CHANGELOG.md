@@ -6,6 +6,17 @@ All notable changes to this project are recorded here. The format follows
 
 ## [Unreleased]
 
+### Added
+- A **per-core grid** in the full window: one load bar per logical core, the
+  efficiency cluster then the performance cluster, colored by load. Watching all
+  cores during a build or an inference run is a glance now.
+
+### Investigated
+- Throttling and memory-pressure **alerts** (system notifications). Built and
+  correct, but macOS denies notification permission to an unsigned app, so they
+  cannot deliver until the app is notarized. Deferred to the notarization step
+  rather than shipping a toggle that silently does nothing.
+
 ## [0.2.0] - 2026-09-09
 
 Metrics for people running local models, a diagnostic view of what is using the

@@ -114,7 +114,10 @@ enum RenderTool {
             return Snapshot(
                 timestamp: t,
                 cpu: CPUSnapshot(usage: cpu, efficiencyUsage: clamp(cpu * 0.45),
-                                 performanceUsage: clamp(cpu * 1.25), perCore: [],
+                                 performanceUsage: clamp(cpu * 1.25),
+                                 perCore: (0..<10).map { k in
+                                     clamp((k < 6 ? 18.0 : 55.0) + 30 * sin(f / 20 + Double(k)))
+                                 },
                                  efficiencyCoreCount: 6, performanceCoreCount: 4),
                 gpu: GPUSnapshot(usage: gpu, available: true, provisional: false),
                 memory: MemorySnapshot(totalBytes: total, usedBytes: UInt64(Double(total) * mem / 100),

@@ -82,8 +82,47 @@ struct MainView: View {
             if store.latest.thermal.available {
                 HStack(spacing: 14) { temperatureChart; fanChart }
             }
+            if !store.latest.cpu.perCore.isEmpty { coresPanel }
             if !store.processes.isEmpty { processPanel }
         }
+    }
+
+    // MARK: - Per-core grid
+
+    private var coresPanel: some View {
+        let c = store.latest.cpu
+        return VStack(alignment: .leading, spacing: 12) {
+            HStack(spacing: 10) {
+                Image(systemName: "cpu").font(.system(size: 11, weight: .semibold)).foregroundStyle(Palette.ink2)
+                Text("Cores").font(.system(size: 13, weight: .semibold)).foregroundStyle(Palette.ink)
+                Spacer()
+                Text("\(c.efficiencyCoreCount) efficiency · \(c.performanceCoreCount) performance")
+                    .font(.vitalsNumber(11)).foregroundStyle(Palette.ink3)
+            }
+            HStack(alignment: .bottom, spacing: 4) {
+                ForEach(Array(c.perCore.enumerated()), id: \.offset) { i, v in
+                    coreBar(v)
+                    if i == c.efficiencyCoreCount - 1 && c.efficiencyCoreCount < c.perCore.count {
+                        Rectangle().fill(Palette.hair).frame(width: 0.5).padding(.horizontal, 3)
+                    }
+                }
+            }
+            .frame(height: 46)
+        }
+        .padding(16)
+        .background(RoundedRectangle(cornerRadius: 12, style: .continuous).fill(Color(nsColor: .controlBackgroundColor)))
+        .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(Palette.hair, lineWidth: 0.5))
+    }
+
+    private func coreBar(_ v: Double) -> some View {
+        GeometryReader { geo in
+            ZStack(alignment: .bottom) {
+                RoundedRectangle(cornerRadius: 3, style: .continuous).fill(Palette.track)
+                RoundedRectangle(cornerRadius: 3, style: .continuous).fill(Palette.load(v))
+                    .frame(height: max(3, geo.size.height * min(max(v, 0), 100) / 100))
+            }
+        }
+        .frame(maxWidth: .infinity)
     }
 
     // MARK: - Top processes
