@@ -13,7 +13,7 @@ import VitalsCore
 final class MCPServer {
     private let protocolVersion = "2024-11-05"
     private let serverName = "mac-vitals"
-    private let serverVersion = "0.2.0"
+    private let serverVersion = "0.2.1"
 
     private let lock = NSLock()
     private var latest: Snapshot = .placeholder
