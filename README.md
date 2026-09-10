@@ -24,7 +24,7 @@ Every Apple Silicon Mac already measures itself in detail. Reaching that data is
 
 It shows up three ways, over one engine:
 
-- a **menu-bar item** you read at a glance,
+- a **menu-bar item** you read at a glance, with a small CPU trend line so you can see where load is heading,
 - a **floating widget** you park anywhere on the desktop,
 - and an **MCP server** an AI agent can query.
 
@@ -35,7 +35,7 @@ It shows up three ways, over one engine:
 - **Memory** used against total the way Activity Monitor counts it, plus the memory-pressure level, swap in use, and how much of it the GPU may use, which is the practical limit for fitting a local model.
 - **Power** in watts, per rail: CPU, GPU, and the Neural Engine, read from the chip's energy counters.
 - **Network, disk, and battery** too: up and down throughput, read and write activity with free space, and charge.
-- **Temperature, fan, and throttling** from the SMC and the OS thermal state, so you can see when a long run is being thermally limited, plus **task traces** that measure what a build or run cost (CPU, GPU, watt-hours, bytes moved, whether it throttled) in the app, the CLI, and over MCP.
+- **Temperature, fan, and throttling** from the SMC and the OS thermal state, so you can see when a long run is being thermally limited. When the machine starts throttling, the menu-bar readout turns amber, then red, so you notice without opening anything. Plus **task traces** that measure what a build or run cost (CPU, GPU, watt-hours, bytes moved, whether it throttled) in the app, the CLI, and over MCP.
 - **What is using the machine**: the top processes by CPU or memory, so you can tell whether the model server is the one eating your RAM. In the full window, the CLI, and over MCP. (Per-process GPU is not exposed to a normal user, so it is left out.)
 - **A full window** with every metric charted from the last minute to a full year, plus year-to-date, with all three resolutions persisted so every range picks up where it left off and the long ranges fill in over time.
 - **No password, ever.** Everything comes through Apple's IOReport interface as a normal user.
@@ -45,7 +45,7 @@ It shows up three ways, over one engine:
 
 ## The full window
 
-Open it from the popover for every metric charted over a selectable range, from one minute of live detail up to a year, plus year-to-date. Three resolutions keep it cheap: per-second detail for the last hour, one-minute averages for about a week, and one-hour averages for over a year. Each resolution is written to its own file, so every range survives a quit and the long ones fill from what is already on disk. A few MB in all. How it holds together across restarts is written up in [docs/history-persistence.md](docs/history-persistence.md).
+Open it from the popover for every metric charted over a selectable range, from one minute of live detail up to a year, plus year-to-date. Hover any chart and a guide line follows the mouse, a dot lands on each line, and a small card reads out the exact time and value at that point. Three resolutions keep it cheap: per-second detail for the last hour, one-minute averages for about a week, and one-hour averages for over a year. Each resolution is written to its own file, so every range survives a quit and the long ones fill from what is already on disk. A few MB in all. How it holds together across restarts is written up in [docs/history-persistence.md](docs/history-persistence.md).
 
 <div align="center">
 <img src="docs/window.png" alt="The Mac Vitals window: CPU, GPU, memory, power, network, and disk charted over the last fifteen minutes" width="840">
@@ -53,7 +53,7 @@ Open it from the popover for every metric charted over a selectable range, from 
 
 ## Install
 
-Mac Vitals is young and not yet notarized, so build it from source. You need macOS 14 or later on Apple Silicon and the Xcode Command Line Tools (`xcode-select --install`).
+Mac Vitals is a free project and is not notarized, since notarization needs a paid Apple Developer account. You build it from source, which signs it locally so it runs without a warning. You need macOS 14 or later on Apple Silicon and the Xcode Command Line Tools (`xcode-select --install`).
 
 ```bash
 git clone https://github.com/netsatsawat/mac-vitals.git
@@ -68,7 +68,7 @@ The app lives in the menu bar with no Dock icon. To keep it around, drag `build/
 
 New here? The [full walkthrough](docs/WALKTHROUGH.md) tours every surface from install to the MCP interface.
 
-- **Menu bar:** a compact CPU and GPU readout, refreshed once a second.
+- **Menu bar:** a compact CPU and GPU readout with a CPU trend line, refreshed once a second. It turns amber, then red, when the machine is throttling.
 - **Click it** for the popover: CPU, GPU, memory, and power, each with a minute of history.
 - **Show widget** (in the popover) toggles the floating gadget. Drag it anywhere. It floats above other windows and remembers where you left it.
 - **Launch at Login** lives in the `⋯` menu, off until you turn it on. It keeps the app running so the history keeps filling, since nothing is collected while it is quit. A one-time hint on first open offers it, and you can toggle it any time.
@@ -170,8 +170,11 @@ If you want the most features today, `stats` is excellent. Mac Vitals is for peo
 - [x] Temperature and fan (SMC)
 - [x] Launch at Login, off by default, with a first-run opt-in
 - [x] Neural Engine power, memory-fit signals (pressure, swap, GPU ceiling), and a throttling indicator
-- [ ] Per-process attribution (what is using the machine)
-- [ ] Notarized release and a Homebrew cask
+- [x] Per-process attribution (what is using the machine)
+- [x] Per-core grid in the full window
+- [x] A CPU trend line in the menu bar, and a throttling warning that colors the readout
+- [x] Hover a chart to read the exact value at a point in time
+- Notarized release and a Homebrew cask are out of scope for now: notarization needs a paid Apple Developer account, and this is a free project. You build it from source instead, which the [Install](#install) section covers.
 
 ## Development
 

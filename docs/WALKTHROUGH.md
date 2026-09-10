@@ -19,7 +19,9 @@ The app has no Dock icon. It lives in the menu bar. To keep it around, drag `bui
 
 ## The menu bar
 
-The readout sits in the menu bar and refreshes once a second. In its default full form it shows CPU, GPU, and memory as percentages, then network down and up.
+The readout sits in the menu bar and refreshes once a second. In its default full form it shows CPU, GPU, and memory as percentages, then network down and up. Beside the CPU number is a small trend line, the last minute of CPU load, so you can tell at a glance whether the machine is settling down or ramping up.
+
+When the machine starts throttling, the whole readout turns amber, then red once the pressure is critical, with a warning triangle. It is the alert without a notification: nothing pops up, the bar itself just changes color, which is all you need from something already sitting in front of you. It goes back to normal on its own when the machine cools off.
 
 <div align="center">
 <img src="hero.png" alt="The menu-bar readout, the popover, and the floating widget" width="880">
@@ -64,6 +66,10 @@ To bring the icon back, open Mac Vitals again from Spotlight or your Application
 </div>
 
 Pick the range from the control in the top right. Short ranges read per-second detail. Longer ranges read minute averages, and the longest read hour averages. When a range is longer than the app has been collecting, a small "collecting" note tells you how much it has so far.
+
+Move the mouse over any chart to read a point exactly. A guide line follows the cursor, a dot sits on each line, and a small card shows the time and the value there. It snaps to the nearest real sample, so the number you read is one that was actually measured, not a guess between points. On the charts with two lines, like network or disk, the card lists both.
+
+Below the charts is a **per-core grid**: one small bar for every logical core, the efficiency cores first, then a divider, then the performance cores. During a build or an inference run you can watch the work spread across the cores, and see when it is pinned to just the performance cluster.
 
 History is kept at three resolutions, each written to its own file: per-second detail for the last hour, one-minute averages for about a week, and one-hour averages for over a year. All told a few MB. Every range survives a quit, and the long ones fill from what is already on disk rather than starting over. The design and the reasons behind it are in [history-persistence.md](history-persistence.md).
 

@@ -10,12 +10,16 @@ All notable changes to this project are recorded here. The format follows
 - A **per-core grid** in the full window: one load bar per logical core, the
   efficiency cluster then the performance cluster, colored by load. Watching all
   cores during a build or an inference run is a glance now.
-
-### Investigated
-- Throttling and memory-pressure **alerts** (system notifications). Built and
-  correct, but macOS denies notification permission to an unsigned app, so they
-  cannot deliver until the app is notarized. Deferred to the notarization step
-  rather than shipping a toggle that silently does nothing.
+- **Throttling warning in the menu bar.** When the machine starts throttling, the
+  readout turns amber, then red when pressure is critical, with a warning
+  triangle. It is the alert without a system notification, which suits a tool that
+  already lives in the menu bar and needs no notification permission to work.
+- **Hover readout on the full-window charts.** Move the mouse over any chart and a
+  guide line, a dot on each series, and a small card show the exact time and value
+  at that point, snapped to the nearest real sample rather than interpolated.
+- **A CPU trend line in the menu bar.** The last minute of CPU load, drawn as a
+  small sparkline beside the numbers, so the bar shows where load is heading and
+  not just its value this instant.
 
 ## [0.2.0] - 2026-09-09
 

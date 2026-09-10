@@ -53,6 +53,8 @@
   .vit-metric { display: flex; align-items: center; gap: 4px; font-weight: 600; }
   .vit-metric svg { width: 13px; height: 13px; opacity: .8; }
   .vit-metric .val { font-family: var(--num); font-size: 12.5px; letter-spacing: -.02em; }
+  .mb-spark { display: flex; align-items: center; }
+  .mb-spark svg { display: block; opacity: .85; }
 
   /* ---- stage: responsive, wraps instead of overlapping ---- */
   .stage {
@@ -295,9 +297,18 @@ function rateCompact(s){
   if(m[2]==='KB') return Math.round(v)+'K';
   return '0';
 }
+// A plain line sparkline for the menu bar: fixed 0-100 scale, no fill, in the
+// bar's own text color, matching the app's MenuBarSparkline.
+function menubarSpark(series, w=26, h=12){
+  const pts=series.map((v,i)=>[ (i/(series.length-1))*w, h - (Math.min(Math.max(v,0),100)/100)*h ]);
+  const line=pts.map((p,i)=>(i?'L':'M')+p[0].toFixed(1)+' '+p[1].toFixed(1)).join(' ');
+  return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">
+    <path d="${line}" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+}
 function menubarItem(d){
   const m=(ic,v)=>`<span class="vit-metric">${ic}<span class="val">${v}</span></span>`;
-  return m(I.cpu, d.cpu.usage+'%') + m(I.gpu, d.gpu.usage+'%') + m(I.mem, d.mem.pct+'%')
+  const sp=`<span class="mb-spark">${menubarSpark(d.hist.cpu)}</span>`;
+  return m(I.cpu, d.cpu.usage+'%') + sp + m(I.gpu, d.gpu.usage+'%') + m(I.mem, d.mem.pct+'%')
        + m(I.down, rateCompact(d.net.down)) + m(I.up, rateCompact(d.net.up));
 }
 

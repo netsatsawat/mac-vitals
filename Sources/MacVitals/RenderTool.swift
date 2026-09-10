@@ -64,6 +64,34 @@ enum RenderTool {
         ]
     }
 
+    /// Two charts with the hover crosshair forced on, to eyeball the guide, the
+    /// snapped dots, and the readout card (single-series and two-series layouts).
+    static func renderChartHover(to path: String) {
+        let now = Date()
+        func pts(_ base: Double, _ amp: Double) -> [(date: Date, value: Double)] {
+            (0..<120).map { i in
+                (date: now.addingTimeInterval(Double(i - 120) * 30),
+                 value: max(0, base + amp * sin(Double(i) / 12)))
+            }
+        }
+        let cpu = TimeChart(
+            title: "CPU", symbol: "cpu", accent: Palette.load(62),
+            lines: [ChartLine(label: "CPU", color: Palette.load(62), points: pts(50, 30))],
+            span: 3600, yMax: 100, yFormat: { "\(Int($0))%" },
+            currentText: "62%", note: "E 20 · P 78", previewHoverX: 150)
+        let net = TimeChart(
+            title: "Network", symbol: "network", accent: Palette.blue,
+            lines: [ChartLine(label: "down", color: Palette.blue, points: pts(6_000_000, 4_000_000)),
+                    ChartLine(label: "up", color: Palette.good, points: pts(500_000, 400_000))],
+            span: 3600, yMax: 12_000_000, yFormat: { Fmt.rate($0) },
+            currentText: "↓ 8.1 MB/s", note: nil, previewHoverX: 150)
+        let view = HStack(spacing: 14) { cpu; net }
+            .padding(16).frame(width: 700).background(Color(nsColor: .windowBackgroundColor))
+        let renderer = ImageRenderer(content: view)
+        renderer.scale = 2
+        write(renderer, to: path)
+    }
+
     static func renderPopover(to path: String) {
         let store = SampleStore(seed: synthetic())
         let view = PopoverView(store: store, onToggleWidget: {}, onHideMenuBar: {}, onQuit: {}).fixedSize()
@@ -74,8 +102,15 @@ enum RenderTool {
 
     /// Preview of the menu-bar readout on a mock dark bar (the real bar renders it
     /// as a monochrome template).
-    static func renderMenuBar(to path: String) {
-        let store = SampleStore(seed: synthetic())
+    static func renderMenuBar(to path: String, warn: Bool = false) {
+        var seed = synthetic()
+        if warn, var last = seed.last {
+            last.thermal = ThermalSnapshot(available: true, socTempC: 96, fanRPM: 4200,
+                                           fanPresent: true, pressure: "critical")
+            last.memory.pressure = "critical"
+            seed[seed.count - 1] = last
+        }
+        let store = SampleStore(seed: seed)
         let view = MenuBarLabel(store: store)
             .foregroundStyle(.white)
             .padding(.horizontal, 10).padding(.vertical, 5)

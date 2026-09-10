@@ -58,8 +58,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             print("unregister accepted: \(ok) · status now: \(LoginItem.statusText)")
             NSApp.terminate(nil)
         }
+        if let i = args.firstIndex(of: "--render-menubar-warn"), i + 1 < args.count {
+            RenderTool.renderMenuBar(to: args[i + 1], warn: true)
+            NSApp.terminate(nil)
+        }
         if let i = args.firstIndex(of: "--render-menubar"), i + 1 < args.count {
             RenderTool.renderMenuBar(to: args[i + 1])
+            NSApp.terminate(nil)
+        }
+        if let i = args.firstIndex(of: "--render-chart-hover"), i + 1 < args.count {
+            RenderTool.renderChartHover(to: args[i + 1])
             NSApp.terminate(nil)
         }
         if let i = args.firstIndex(of: "--render-popover"), i + 1 < args.count {
@@ -159,16 +167,37 @@ struct MenuBarLabel: View {
     }
 
     private func rendered(_ s: Snapshot, full: Bool) -> NSImage? {
-        let renderer = ImageRenderer(content: readout(s, full: full))
+        let warn = warnColor(s)
+        let renderer = ImageRenderer(content: readout(s, full: full, tint: warn))
         renderer.scale = NSScreen.main?.backingScaleFactor ?? 2
         guard let image = renderer.nsImage else { return nil }
-        image.isTemplate = true // let the menu bar tint it for light/dark
+        // A template image is tinted by the menu bar (adapts to light/dark) but
+        // loses its own color. When the machine is throttling we want the amber
+        // or red to show, so drop the template flag only then.
+        image.isTemplate = (warn == nil)
         return image
     }
 
-    private func readout(_ s: Snapshot, full: Bool) -> some View {
+    /// Amber once the machine is throttling, red when it is critical. Nil while
+    /// everything is fine, which keeps the readout a normal monochrome bar item.
+    /// This is the always-visible alert: no notification permission needed, since
+    /// the menu bar itself carries the warning.
+    private func warnColor(_ s: Snapshot) -> Color? {
+        let t = s.thermal.pressure, m = s.memory.pressure
+        if t == "critical" || m == "critical" { return Color(red: 1, green: 0.23, blue: 0.19) }
+        if t == "serious" { return Color(red: 1, green: 0.58, blue: 0) }
+        return nil
+    }
+
+    private func readout(_ s: Snapshot, full: Bool, tint: Color?) -> some View {
         HStack(spacing: 9) {
+            if tint != nil {
+                Image(systemName: "exclamationmark.triangle.fill").imageScale(.small)
+            }
             metric(Sym.cpu, "\(Int(s.cpu.usage.rounded()))%")
+            if store.cpuHistory.count > 1 {
+                MenuBarSparkline(values: store.cpuHistory, color: tint ?? .black)
+            }
             metric(Sym.gpu, "\(Int(s.gpu.usage.rounded()))%")
             if full {
                 metric(Sym.mem, "\(Int(s.memory.usedPercent.rounded()))%")
@@ -180,7 +209,9 @@ struct MenuBarLabel: View {
         }
         .font(.system(size: 12, weight: .regular))
         .monospacedDigit()
-        .foregroundStyle(.black) // a template image uses only the alpha shape
+        // A template image uses only the alpha shape, so black is a placeholder
+        // there; the real color only matters when we render in color to warn.
+        .foregroundStyle(tint ?? .black)
         .padding(.vertical, 1)
         .padding(.horizontal, 3) // keep edge glyphs from clipping in the rendered image
         .fixedSize()
@@ -191,5 +222,33 @@ struct MenuBarLabel: View {
             Image(systemName: symbol).imageScale(.small)
             Text(value)
         }
+    }
+}
+
+/// A minute of CPU as a small trend line for the menu bar, so the bar shows where
+/// load is heading, not just its value this instant. Scaled to a fixed 0-100 so
+/// the height is honest: a low flat line is a genuinely idle machine, not a
+/// magnified wiggle. Drawn in the passed color so it matches the readout in both
+/// the normal (template) and throttling (tinted) states.
+struct MenuBarSparkline: View {
+    var values: [Double]
+    var color: Color
+    var width: CGFloat = 26
+    var height: CGFloat = 11
+
+    var body: some View {
+        Canvas { ctx, size in
+            guard values.count > 1 else { return }
+            var path = Path()
+            for (i, v) in values.enumerated() {
+                let x = size.width * CGFloat(i) / CGFloat(values.count - 1)
+                let y = size.height * (1 - CGFloat(min(max(v, 0), 100) / 100))
+                if i == 0 { path.move(to: CGPoint(x: x, y: y)) }
+                else { path.addLine(to: CGPoint(x: x, y: y)) }
+            }
+            ctx.stroke(path, with: .color(color),
+                       style: StrokeStyle(lineWidth: 1.2, lineCap: .round, lineJoin: .round))
+        }
+        .frame(width: width, height: height)
     }
 }
