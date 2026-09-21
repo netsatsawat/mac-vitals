@@ -53,7 +53,17 @@ Open it from the popover for every metric charted over a selectable range, from 
 
 ## Install
 
-Mac Vitals is a free project and is not notarized, since notarization needs a paid Apple Developer account. You build it from source, which signs it locally so it runs without a warning. You need macOS 14 or later on Apple Silicon and the Xcode Command Line Tools (`xcode-select --install`).
+You need macOS 14 or later on Apple Silicon. Pick one.
+
+**Download it.** Get the `MacVitals-<version>.zip` from the [latest release](https://github.com/netsatsawat/mac-vitals/releases/latest), unzip it, and move `MacVitals.app` into `/Applications`. macOS blocks the first launch, because the app is not notarized. Notarization needs a paid Apple Developer account, and this is a free project. To let it through: open System Settings, go to Privacy & Security, scroll to where it says MacVitals was blocked, and click Open Anyway. Or clear the quarantine flag from the terminal and open it as usual:
+
+```bash
+xattr -d com.apple.quarantine /Applications/MacVitals.app
+```
+
+That is a one-time step. After it the app opens like any other.
+
+**Or build it yourself.** This signs the app locally, so it runs with no warning at all. You need the Xcode Command Line Tools (`xcode-select --install`).
 
 ```bash
 git clone https://github.com/netsatsawat/mac-vitals.git
@@ -62,7 +72,7 @@ cd mac-vitals
 open build/MacVitals.app
 ```
 
-The app lives in the menu bar with no Dock icon. To keep it around, drag `build/MacVitals.app` into `/Applications`.
+Either way the app lives in the menu bar with no Dock icon. Keeping it in `/Applications` is what keeps it around.
 
 ## Using it
 
@@ -174,7 +184,8 @@ If you want the most features today, `stats` is excellent. Mac Vitals is for peo
 - [x] Per-core grid in the full window
 - [x] A CPU trend line in the menu bar, and a throttling warning that colors the readout
 - [x] Hover a chart to read the exact value at a point in time
-- Notarized release and a Homebrew cask are out of scope for now: notarization needs a paid Apple Developer account, and this is a free project. You build it from source instead, which the [Install](#install) section covers.
+- [x] A prebuilt `MacVitals.app` zip on every release, built by CI, so you can skip the build. It is not notarized, and the [Install](#install) section covers the one-time Open Anyway step.
+- Notarization and a Homebrew cask are still out of scope: notarization needs a paid Apple Developer account, and this is a free project.
 
 ## Development
 

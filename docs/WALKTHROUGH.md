@@ -6,7 +6,11 @@ If you just want it running, the three commands in [Install](#install) are enoug
 
 ## Install
 
-You need macOS 14 or later on Apple Silicon and the Xcode Command Line Tools (`xcode-select --install`).
+You need macOS 14 or later on Apple Silicon.
+
+The quick way: download the `MacVitals-<version>.zip` from the [latest release](https://github.com/netsatsawat/mac-vitals/releases/latest), unzip it, and move `MacVitals.app` into `/Applications`. macOS blocks the first launch because the app is not notarized. Open System Settings, go to Privacy & Security, scroll to where it says MacVitals was blocked, and click Open Anyway. Or run `xattr -d com.apple.quarantine /Applications/MacVitals.app` and open it as usual. That is a one-time step.
+
+Or build it from source, which signs it locally so it runs with no warning. You need the Xcode Command Line Tools (`xcode-select --install`).
 
 ```bash
 git clone https://github.com/netsatsawat/mac-vitals.git
@@ -15,7 +19,7 @@ cd mac-vitals
 open build/MacVitals.app
 ```
 
-The app has no Dock icon. It lives in the menu bar. To keep it around, drag `build/MacVitals.app` into `/Applications`.
+The app has no Dock icon. It lives in the menu bar. Keeping it in `/Applications` is what keeps it around.
 
 ## The menu bar
 
