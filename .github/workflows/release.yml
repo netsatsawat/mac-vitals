@@ -1,0 +1,42 @@
+name: Release assets
+
+# Attach a prebuilt MacVitals.app zip to every published release, so a reader can
+# skip the build. The app is ad-hoc signed by build-app.sh and not notarized
+# (notarization needs a paid Apple Developer account), so the README's Install
+# section covers the one-time Open Anyway step.
+#
+# Also runnable by hand from the Actions tab to attach the app to an older tag.
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag to attach the app to (for example v0.2.1)"
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  attach-app:
+    name: Build and attach MacVitals.app
+    runs-on: macos-15
+    env:
+      TAG: ${{ github.event.release.tag_name || inputs.tag }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.release.tag_name || inputs.tag }}
+
+      - name: Build the app bundle
+        run: ./scripts/build-app.sh release
+
+      - name: Zip the bundle
+        run: ditto -c -k --keepParent build/MacVitals.app "MacVitals-${TAG}.zip"
+
+      - name: Attach to the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "$TAG" "MacVitals-${TAG}.zip" --clobber
