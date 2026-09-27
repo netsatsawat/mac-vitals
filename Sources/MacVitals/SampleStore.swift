@@ -22,6 +22,10 @@ final class SampleStore: ObservableObject {
     /// so scanning every pid never runs when nothing shows it.
     @Published private(set) var processes: [ProcessUsage] = []
 
+    /// The one live store. The SwiftUI scenes and the AppDelegate's companion
+    /// both read it, so it cannot be owned by either.
+    static let shared = SampleStore()
+
     private let monitor = Monitor()
     private let processReader = ProcessReader()
     private var wantsProcesses = false

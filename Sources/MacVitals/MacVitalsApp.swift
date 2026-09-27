@@ -4,7 +4,7 @@ import VitalsCore
 @main
 struct MacVitalsApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) private var delegate
-    @StateObject private var store = SampleStore()
+    @StateObject private var store = SampleStore.shared
     // When on, the app keeps running and recording with no menu-bar icon.
     // Reopening the app clears it (the AppDelegate's reopen handler), which is
     // how the icon comes back.
@@ -19,7 +19,9 @@ struct MacVitalsApp: App {
                 store: store,
                 onToggleWidget: { delegate.panel.toggle(store: store) },
                 onHideMenuBar: { delegate.enterBackgroundMode() },
-                onQuit: { NSApp.terminate(nil) }
+                onQuit: { NSApp.terminate(nil) },
+                companionStatus: { delegate.companion.statusText },
+                companionOutfits: { delegate.companion.outfitItems() }
             )
         } label: {
             MenuBarLabel(store: store)
@@ -38,6 +40,7 @@ struct MacVitalsApp: App {
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
     let panel = FloatingPanelController()
+    let companion = CompanionController()
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
         let args = CommandLine.arguments
@@ -68,6 +71,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
         if let i = args.firstIndex(of: "--render-chart-hover"), i + 1 < args.count {
             RenderTool.renderChartHover(to: args[i + 1])
+            NSApp.terminate(nil)
+        }
+        if let i = args.firstIndex(of: "--render-companion"), i + 1 < args.count {
+            func opt(_ flag: String) -> String? {
+                guard let j = args.firstIndex(of: flag), j + 1 < args.count else { return nil }
+                return args[j + 1]
+            }
+            RenderTool.renderCompanion(to: args[i + 1],
+                                       packSpec: opt("--companion-pack") ?? CompanionController.defaultName,
+                                       state: opt("--companion-state") ?? "all",
+                                       gaze: opt("--companion-gaze"),
+                                       outfit: opt("--companion-outfit"))
             NSApp.terminate(nil)
         }
         if let i = args.firstIndex(of: "--render-popover"), i + 1 < args.count {
@@ -105,6 +120,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                     if !stillOpen { NSApp.setActivationPolicy(.accessory) }
                 }
             }
+        }
+
+        // The desktop companion, off until the user turns it on in the ⋯ menu.
+        companion.attach(store: SampleStore.shared)
+
+        if let i = args.firstIndex(of: "--companion-probe"), i + 1 < args.count {
+            let spec = args.firstIndex(of: "--companion-pack").flatMap { $0 + 1 < args.count ? args[$0 + 1] : nil }
+            companion.probe(to: args[i + 1], packSpec: spec) { NSApp.terminate(nil) }
         }
     }
 

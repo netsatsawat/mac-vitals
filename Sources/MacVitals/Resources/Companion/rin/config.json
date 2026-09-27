@@ -1,0 +1,31 @@
+{
+  "name": "rin",
+  "max_width": 220,
+  "max_height": 330,
+  "eyes": {
+    "travel_radius": 6.0,
+    "left": {
+      "x": 131.5,
+      "y": 284.0
+    },
+    "right": {
+      "x": 272.5,
+      "y": 283.0
+    }
+  },
+  "blink": {
+    "enabled": true,
+    "every": [
+      3,
+      7
+    ],
+    "duration": 0.28
+  },
+  "click_squint": 0.5,
+  "idle": {
+    "random_every": [
+      60,
+      150
+    ]
+  }
+}

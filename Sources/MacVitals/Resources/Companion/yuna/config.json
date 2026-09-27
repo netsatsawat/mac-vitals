@@ -1,0 +1,31 @@
+{
+  "name": "yuna",
+  "max_width": 220,
+  "max_height": 330,
+  "eyes": {
+    "travel_radius": 10.0,
+    "left": {
+      "x": 225.5,
+      "y": 400.5
+    },
+    "right": {
+      "x": 442.0,
+      "y": 400.0
+    }
+  },
+  "blink": {
+    "enabled": true,
+    "every": [
+      3,
+      7
+    ],
+    "duration": 0.28
+  },
+  "click_squint": 0.5,
+  "idle": {
+    "random_every": [
+      60,
+      150
+    ]
+  }
+}

@@ -121,6 +121,129 @@ enum RenderTool {
         write(renderer, to: path)
     }
 
+    /// A strip of the companion's frames, composed through the same layout the
+    /// panel uses, plus a row of 3x eye crops to check pupil placement. `state`
+    /// is "all" or one state name; `gaze` is "x,y" in box points for open frames.
+    /// States the pack has no art for are labelled with what they fall through to.
+    static func renderCompanion(to path: String, packSpec: String, state: String, gaze: String?, outfit: String? = nil) {
+        guard let url = CompanionPack.resolve(spec: packSpec), let pack = CompanionPack.load(url: url) else {
+            FileHandle.standardError.write(Data("render-companion: no pack for \(packSpec)\n".utf8))
+            return
+        }
+        let outfitRaster: CompanionRaster? = outfit.flatMap { name in
+            let r = pack.outfit(name)
+            if r == nil { FileHandle.standardError.write(Data("render-companion: no outfit '\(name)' in pack\n".utf8)) }
+            return r
+        }
+        let layout = pack.layout
+        struct Cell { var label: String; var frame: CompanionFrame; var gaze: CompanionPoint? }
+        let open = CompanionFrame(asset: .still("static"), mode: .open, nextChange: nil)
+        let eyes = layout.eyePoints
+        let eyeY = eyes.map { ($0.left.y + $0.right.y) / 2 } ?? layout.box.height / 3
+        let midX = eyes.map { ($0.left.x + $0.right.x) / 2 } ?? layout.box.width / 2
+        let custom: CompanionPoint? = gaze.flatMap { g in
+            let p = g.split(separator: ",").compactMap { Double($0.trimmingCharacters(in: .whitespaces)) }
+            return p.count == 2 ? CompanionPoint(x: p[0], y: p[1]) : nil
+        }
+        // A fresh engine per cell, so a transition clip started by one state
+        // (sleep_in, a hungry clip) does not carry into the next cell.
+        func stateCell(_ s: CompanionState, gaze: CompanionPoint?) -> Cell {
+            var engine = CompanionEngine(assets: pack.assets, now: 0, rng: SplitMix64(seed: 1))
+            engine.update(active: [s, .awake], now: 0)
+            let f = engine.frame(now: 0)
+            let label = engine.displayed == s
+                ? s.word
+                : "\(s.word) > \(engine.displayed.word) (no \(s.stillName ?? "art").png)"
+            return Cell(label: label, frame: f, gaze: gaze ?? CompanionPoint(x: midX, y: eyeY + 2 * layout.travel))
+        }
+        let blinkCell = Cell(label: pack.assets.hasBlink ? "blink" : "blink > static, no pupils (no blink.png)",
+                             frame: CompanionFrame(asset: .still("blink"), mode: .blink, nextChange: nil), gaze: nil)
+        var cells: [Cell] = []
+        if state == "all" {
+            let nose = eyes.map { CompanionGaze.nose(left: $0.left, right: $0.right, travel: layout.travel) }
+            cells = [
+                Cell(label: "awake, cursor far left", frame: open, gaze: CompanionPoint(x: -1000, y: eyeY)),
+                Cell(label: "awake, cursor far right", frame: open, gaze: CompanionPoint(x: layout.box.width + 1000, y: eyeY)),
+                Cell(label: "awake, cursor above", frame: open, gaze: CompanionPoint(x: midX, y: -1000)),
+                Cell(label: "awake, cursor on another screen", frame: open, gaze: nose),
+                blinkCell,
+            ]
+            if let clip = pack.assets.clickPool.first, let delays = pack.assets.clips[clip] {
+                for (i, d) in delays.enumerated() {
+                    cells.append(Cell(label: "\(clip) frame \(i) (\(Int((d * 1000).rounded())) ms)",
+                                      frame: CompanionFrame(asset: .clip(clip, i), mode: .anim, nextChange: nil), gaze: nil))
+                }
+            }
+            for s in [CompanionState.sleepy, .asleep, .working, .hot, .throttling, .hungry] {
+                cells.append(stateCell(s, gaze: nil))
+            }
+        } else if let s = CompanionState(rawValue: state) {
+            cells = [s == .awake ? Cell(label: "awake", frame: open, gaze: custom) : stateCell(s, gaze: custom)]
+        } else if state == "blink" {
+            cells = [blinkCell]
+        } else {
+            FileHandle.standardError.write(Data("render-companion: unknown state \(state)\n".utf8))
+            return
+        }
+
+        // Layout in points, top-left origin, drawn at 2x.
+        let scale: CGFloat = 2
+        let cellW = layout.box.width, cellH = layout.box.height
+        let labelH: CGFloat = 16, gap: CGFloat = 12, pad: CGFloat = 12
+        let crop = max(24, (layout.spriteSize.width * 2.5).rounded())
+        let colW = max(cellW, crop * 6 + 6)
+        let n = CGFloat(cells.count)
+        let totalW = pad * 2 + colW * n + gap * (n - 1)
+        let totalH = pad * 2 + labelH + cellH + gap + labelH + crop * 3
+        guard let rep = NSBitmapImageRep(bitmapDataPlanes: nil, pixelsWide: Int(totalW * scale), pixelsHigh: Int(totalH * scale),
+                                         bitsPerSample: 8, samplesPerPixel: 4, hasAlpha: true, isPlanar: false,
+                                         colorSpaceName: .deviceRGB, bytesPerRow: 0, bitsPerPixel: 0) else { return }
+        // Point size before the context is made, so the context draws at 2x.
+        rep.size = NSSize(width: totalW, height: totalH)
+        guard let gc = NSGraphicsContext(bitmapImageRep: rep) else { return }
+        NSGraphicsContext.saveGraphicsState()
+        NSGraphicsContext.current = gc
+        let cg = gc.cgContext
+        cg.setFillColor(CGColor(gray: 0.86, alpha: 1))
+        cg.fill(CGRect(x: 0, y: 0, width: totalW, height: totalH))
+        func bl(_ x: CGFloat, _ y: CGFloat, _ w: CGFloat, _ h: CGFloat) -> CGRect {
+            CGRect(x: x, y: totalH - y - h, width: w, height: h)
+        }
+        let font = NSFont.systemFont(ofSize: 10, weight: .medium)
+        let attrs: [NSAttributedString.Key: Any] = [.font: font, .foregroundColor: NSColor(white: 0.15, alpha: 1)]
+        for (i, cell) in cells.enumerated() {
+            let x = pad + CGFloat(i) * (colW + gap)
+            NSAttributedString(string: cell.label, attributes: attrs).draw(at: NSPoint(x: x, y: totalH - pad - labelH + 2))
+            guard let img = CompanionComposer.compose(pack: pack, frame: cell.frame, gaze: cell.gaze,
+                                                      outfit: outfitRaster, scale: scale) else { continue }
+            let bodyRect = bl(x + (colW - cellW) / 2, pad + labelH, cellW, cellH)
+            cg.setFillColor(CGColor(gray: 0.97, alpha: 1))
+            cg.fill(bodyRect)
+            cg.interpolationQuality = .none
+            cg.draw(img, in: bodyRect)
+            // Eye crops, 3x, nearest neighbour so the pixel edges show.
+            guard let el = layout.eyeLeft, let er = layout.eyeRight else { continue }
+            let rowY = pad + labelH + cellH + gap
+            NSAttributedString(string: "eyes 3x", attributes: attrs).draw(at: NSPoint(x: x, y: totalH - rowY - labelH + 2))
+            for (k, e) in [el, er].enumerated() {
+                // Clip the source to the image so an eye near an edge keeps its
+                // 3x scale and the missing part stays blank, instead of a smaller
+                // piece being stretched to fill the square.
+                let wanted = CGRect(x: (e.x - crop / 2) * scale, y: (e.y - crop / 2) * scale, width: crop * scale, height: crop * scale)
+                let src = wanted.intersection(CGRect(x: 0, y: 0, width: img.width, height: img.height))
+                guard !src.isNull, let piece = img.cropping(to: src) else { continue }
+                let cellX = x + CGFloat(k) * (crop * 3 + 6)
+                let dst = bl(cellX + (src.minX - wanted.minX) / scale * 3, rowY + labelH + (src.minY - wanted.minY) / scale * 3,
+                             src.width / scale * 3, src.height / scale * 3)
+                cg.draw(piece, in: dst)
+            }
+        }
+        NSGraphicsContext.restoreGraphicsState()
+        if let png = rep.representation(using: .png, properties: [:]) {
+            try? png.write(to: URL(fileURLWithPath: path))
+        }
+    }
+
     private static func write(_ renderer: ImageRenderer<some View>, to path: String) {
         guard let image = renderer.nsImage,
               let tiff = image.tiffRepresentation,
