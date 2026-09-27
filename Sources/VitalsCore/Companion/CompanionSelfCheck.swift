@@ -317,6 +317,17 @@ public enum CompanionSelfCheck {
                       Sample(t: ref, cpu: 5, gpu: 5, mem: 50, watts: 5,
                              netDown: 0, netUp: 0, diskRead: 0, diskWrite: 0, temp: 40, fan: 900, throttled: false, swap: 0)]
         expect(!CompanionChallenges.isMet(.cozy, hours: sparse, now: ref), "sparse cool hours should not earn cozy")
+        // A laptop used about eight hours a day and asleep overnight does earn it.
+        let workdays = (0..<7).flatMap { day in (0..<8).map { h in
+            Sample(t: ref.addingTimeInterval(Double(-day * 86_400 - h * 3600)), cpu: 20, gpu: 10, mem: 60, watts: 8,
+                   netDown: 0, netUp: 0, diskRead: 0, diskWrite: 0, temp: 45, fan: 1000, throttled: false, swap: 0)
+        } }
+        expect(CompanionChallenges.isMet(.cozy, hours: workdays, now: ref), "eight cool hours a day for a week should earn cozy")
+        let shortDays = (0..<7).flatMap { day in (0..<5).map { h in
+            Sample(t: ref.addingTimeInterval(Double(-day * 86_400 - h * 3600)), cpu: 20, gpu: 10, mem: 60, watts: 8,
+                   netDown: 0, netUp: 0, diskRead: 0, diskWrite: 0, temp: 45, fan: 1000, throttled: false, swap: 0)
+        } }
+        expect(!CompanionChallenges.isMet(.cozy, hours: shortDays, now: ref), "five hours a day is under the floor")
         var oneHot = coolWeek
         oneHot[oneHot.count / 2].temp = 90
         expect(!CompanionChallenges.isMet(.cozy, hours: oneHot, now: ref), "a hot hour breaks cozy")

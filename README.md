@@ -42,7 +42,7 @@ It shows up three ways, over one engine:
 - **Zero dependencies.** One Swift package, no runtime, no helper daemon, no kernel extension.
 - **Light and dark**, following the system, on native vibrancy.
 - **An MCP server** so an agent can ask what a build or a training run cost the machine.
-- **A desktop companion**, off by default: a small anime character whose eyes follow your pointer, who blinks, winks when you click her, and winks on her own now and then. The menu line says what the machine is doing (working, hot, throttling, low battery, sleepy, asleep), and a character pack with a picture for a state shows it on her face. Packs use [mycat](https://github.com/yumiaura/mycat)'s format, so you can draw your own. See [docs/COMPANION.md](docs/COMPANION.md).
+- **A desktop companion**, off by default: a small anime character whose eyes follow your pointer, who blinks, winks when you click her, and winks on her own now and then. The menu line says what the machine is doing (working, hot, throttling, low battery), and a character pack with a picture for a state, sleepy and asleep included, shows it on her face. Packs use [mycat](https://github.com/yumiaura/mycat)'s format, so you can draw your own. See [docs/COMPANION.md](docs/COMPANION.md).
 
 ## The full window
 
