@@ -6,6 +6,22 @@ All notable changes to this project are recorded here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- A straw sun hat for the Sun's out outfit on both characters, so both earned
+  outfits now have art. Like the scarf, you put it on from the Outfit item in the
+  ⋯ menu once it is earned.
+- Two more reactions on both characters. A click now makes her wink or turn shy,
+  blushing and glancing away, and now and then she winks or smiles with her eyes
+  closed. They are extra clips in the pools packs already have (`click2.gif`,
+  `idle2.gif`), so the pack format is unchanged.
+
+### Changed
+
+- The prebuilt zip grows to about 7 MB with the new art.
+- CI and the release workflow use `actions/checkout@v7`, which runs on Node 24,
+  because GitHub is retiring Node 20.
+
 ## [0.3.0] - 2026-09-27
 
 A face for the numbers. Still a normal user, no `sudo`.

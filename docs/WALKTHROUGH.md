@@ -63,7 +63,7 @@ To bring the icon back, open Mac Vitals again from Spotlight or your Application
 
 ## The desktop companion
 
-**Companion** in the `⋯` menu puts a small character on your desktop, Rin by default. It is off until you turn it on. Her eyes follow the pointer, she blinks, and a click makes her wink. Drag her anywhere and she stays there. The line under the toggle says what the machine is doing, for example "rin is working" while load holds high. Over time she earns outfits from how your Mac runs, and you put one on from the Outfit item in the same menu. She hides while the menu-bar icon is off. [The companion guide](COMPANION.md) covers her states, the outfits, and how to draw your own character.
+**Companion** in the `⋯` menu puts a small character on your desktop, Rin by default. It is off until you turn it on. Her eyes follow the pointer, she blinks, and a click makes her wink or turn shy. Drag her anywhere and she stays there. The line under the toggle says what the machine is doing, for example "rin is working" while load holds high. Over time she earns outfits from how your Mac runs, and you put one on from the Outfit item in the same menu. She hides while the menu-bar icon is off. [The companion guide](COMPANION.md) covers her states, the outfits, and how to draw your own character.
 
 ## The full window and its history
 
