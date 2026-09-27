@@ -6,6 +6,11 @@ All notable changes to this project are recorded here. The format follows
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-09-28
+
+A sun hat for the hot days, and two new reactions. Still a normal user, no
+`sudo`.
+
 ### Added
 
 - A straw sun hat for the Sun's out outfit on both characters, so both earned
@@ -18,7 +23,7 @@ All notable changes to this project are recorded here. The format follows
 
 ### Changed
 
-- The prebuilt zip grows to about 7 MB with the new art.
+- The prebuilt zip grows from about 6 MB to about 7 MB with the new art.
 - CI and the release workflow use `actions/checkout@v7`, which runs on Node 24,
   because GitHub is retiring Node 20.
 
@@ -158,7 +163,8 @@ dependencies, no helper daemon, and no kernel extension.
   the GPU's performance-state residency, where state 0 (`OFF`) is idle, so
   `usage = 1 - OFF/total`. GPU power in watts is exact.
 
-[Unreleased]: https://github.com/netsatsawat/mac-vitals/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/netsatsawat/mac-vitals/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/netsatsawat/mac-vitals/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/netsatsawat/mac-vitals/compare/v0.2.1...v0.3.0
 [0.2.1]: https://github.com/netsatsawat/mac-vitals/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/netsatsawat/mac-vitals/compare/v0.1.0...v0.2.0
