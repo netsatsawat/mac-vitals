@@ -6,31 +6,33 @@ All notable changes to this project are recorded here. The format follows
 
 ## [Unreleased]
 
-A face for the numbers.
+## [0.3.0] - 2026-09-27
+
+A face for the numbers. Still a normal user, no `sudo`.
 
 ### Added
 
 - A desktop companion, off by default. Switch it on under ⋯ in the popover and a
   small anime character stands on your desktop. Her eyes follow the pointer, she
   blinks, a click makes her wink, and now and then she winks on her own. Drag her
-  anywhere and she stays there. The
-  line under the toggle says what the machine is doing: working when CPU or GPU
-  load holds at 70% or more, hot when the chip holds at 85 °C or more,
-  throttling the moment macOS says so, hungry at 20% battery, sleepy after a
-  minute with no input and asleep after five. A character pack that carries a
-  picture for a state shows it on her face. Two characters ship, Rin (the
-  default) and yuna, and both draw awake, blink and wink, so those other faces
-  are there for you to draw. Packs use
+  anywhere and she stays there. The line under the toggle says what the machine
+  is doing: working when CPU or GPU load holds at 70% or more, hot when the chip
+  holds at 85 °C or more, throttling the moment macOS says so, and hungry at 20%
+  battery. A character pack that carries a picture for a state shows it on her
+  face, and that includes sleepy after a minute with no input and asleep after
+  five. Two characters ship, Rin (the default) and yuna, and both draw awake,
+  blink and wink, so those other faces are there for you to draw. Packs use
   [mycat](https://github.com/yumiaura/mycat)'s format, so packs made for it work
   here, and your own go in `~/Library/Application Support/MacVitals/Companion/`.
   She hides while the menu-bar icon is off. See
   [docs/COMPANION.md](docs/COMPANION.md).
 - Companion outfits, earned by how the machine runs. Two challenges to start:
-  Cozy (a week of the Mac staying cool) and Sun's out (a hot stretch or a spell
-  of throttling), read from the recorded history. An earned outfit stays earned.
-  A pack shows an outfit when it carries the matching `outfit_<name>.png`, and an
-  Outfit item in the ⋯ menu picks between the ones you have earned. Both shipped
-  characters come with a Cozy knit scarf; more are yours to draw.
+  Cozy (a week of use with the Mac staying cool, at least 42 recorded hours) and
+  Sun's out (a hot stretch or a spell of throttling), read from the recorded
+  history. An earned outfit stays earned. Once earned, you put it on from the
+  Outfit item in the ⋯ menu. A pack shows an outfit only when it carries the
+  matching `outfit_<name>.png`. Both shipped characters come with a Cozy knit
+  scarf, and more are yours to draw.
 - Developer flags: `MacVitals --render-companion <png>` draws a strip of every
   state and gaze for a pack without a display (add `--companion-outfit <name>`
   to check a costume), and `--companion-probe <png>` dumps the live panel's
@@ -38,6 +40,13 @@ A face for the numbers.
 - `vitals --selftest` now runs the companion's logic checks (config decoding,
   fit and gaze geometry, the mood latches, the frame engine) alongside the
   sensor bounds.
+
+### Changed
+
+- The prebuilt zip grows from about 1 MB to about 6 MB, because the two
+  characters ship as art.
+- `scripts/build-app.sh` copies the character packs into the app and now stops
+  if signing fails. It used to carry on silently.
 
 ## [0.2.1] - 2026-09-10
 
@@ -133,7 +142,8 @@ dependencies, no helper daemon, and no kernel extension.
   the GPU's performance-state residency, where state 0 (`OFF`) is idle, so
   `usage = 1 - OFF/total`. GPU power in watts is exact.
 
-[Unreleased]: https://github.com/netsatsawat/mac-vitals/compare/v0.2.1...HEAD
+[Unreleased]: https://github.com/netsatsawat/mac-vitals/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/netsatsawat/mac-vitals/compare/v0.2.1...v0.3.0
 [0.2.1]: https://github.com/netsatsawat/mac-vitals/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/netsatsawat/mac-vitals/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/netsatsawat/mac-vitals/releases/tag/v0.1.0

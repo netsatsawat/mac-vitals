@@ -26,7 +26,7 @@ public enum CompanionChallenge: String, CaseIterable, Sendable {
     /// One line shown in the menu whether it is earned or still locked.
     public var detail: String {
         switch self {
-        case .cozy: "Seven days with the Mac staying cool."
+        case .cozy: "A week of use with the Mac staying cool."
         case .sunny: "A hot stretch, or a spell of throttling."
         }
     }
@@ -39,6 +39,10 @@ public enum CompanionChallenge: String, CaseIterable, Sendable {
 public struct CompanionChallengeRules: Sendable, Equatable {
     /// Days the machine must stay cool for `cozy`.
     public var coolDays: Double = 7
+    /// Recorded hours `cozy` needs per day of the window, on average. The app only
+    /// records while it runs and the Mac is awake, so this is a floor on real use,
+    /// set low enough for a laptop that sleeps overnight.
+    public var minHoursPerDay: Double = 6
     /// The hour-average temperature `cozy` must stay under, in Celsius.
     public var coolCeilingC: Double = 55
     /// Consecutive hot hours that earn `sunny`.
@@ -75,7 +79,7 @@ public enum CompanionChallenges {
             let recent = hours.filter { $0.t >= window }
             // Enough hours, and spread across the week rather than clustered in a day,
             // so two cool hours far apart do not pass.
-            guard recent.count >= Int(rules.coolDays * 12) else { return false }
+            guard recent.count >= Int(rules.coolDays * rules.minHoursPerDay) else { return false }
             let times = recent.map(\.t)
             guard let lo = times.min(), let hi = times.max(),
                   hi.timeIntervalSince(lo) >= (rules.coolDays - 1) * 86_400 else { return false }

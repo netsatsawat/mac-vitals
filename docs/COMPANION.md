@@ -13,7 +13,7 @@ Four things happen on her face. Her eyes follow your pointer. She blinks every f
 Underneath, the engine tracks what the machine is doing, and the status line in the `⋯` menu reports it:
 
 - **Awake.** Nothing else applies.
-- **Sleepy** after a minute with no keyboard, mouse or trackpad input, and **asleep** after five minutes. Any input wakes her.
+- **Sleepy** after a minute with no keyboard, mouse or trackpad input, and **asleep** after five minutes. Any input wakes her, and opening the menu is input too, so you will rarely see these two in the status line. They show on her face when the pack has the art (`sleepy.png`, `sleep.png`), and the shipped characters do not have it yet.
 - **Working** when CPU or GPU load holds at 70% or more for three readings in a row. She stops when it holds under 55% for five. The gap between the two lines is what keeps her from flickering on a load that hovers near the line.
 - **Hot** when the chip holds at 85 °C or more for three readings, until it holds under 70 °C for five. Only on Macs where the temperature sensor is readable.
 - **Throttling** the moment macOS reports serious or critical thermal pressure, the same thermal signal that colours the menu-bar readout.
@@ -33,12 +33,12 @@ Drag her anywhere. She remembers the spot, and she keeps it across restarts. A s
 
 She can earn outfits by how the machine runs over time, read from the same history the charts are drawn from. An earned outfit is an achievement: once you have it, it stays, so a Mac that runs cool for a week and then runs hot keeps both. Two challenges ship:
 
-- **Cozy**: a week of recording with the Mac staying cool, every recorded hour at 55 °C or below and none throttling. The app only records while it runs, so this is the hours it saw, spread across the week.
+- **Cozy**: a week of use with the Mac staying cool. The app only records while it runs and the Mac is awake, so it counts the hours it saw: at least 42 across the last seven days (about six a day), spread over the week, every one at 55 °C or below and none throttling. It needs a Mac whose temperature sensor can be read.
 - **Sun's out**: a hot stretch, two hours or more running at 85 °C or above, or any spell of throttling.
 
 An outfit only shows up when the character pack has a picture for it. Once the pack has the art, an Outfit item appears in the `⋯` menu: it lists any outfits you have earned, None, and the locked ones underneath as hints of what earns them. The numbers above are design choices, set in `CompanionChallengeRules`, not readings.
 
-Both shipped characters come with a Cozy knit scarf (`outfit_cozy.png`), so earning the Cozy challenge dresses them. Sun's out has no art yet. Draw more the same way: an outfit is a full-canvas `outfit_<name>.png` on the same canvas as `static.png`, drawn over her body and under her eyes. The names that pair with the two challenges are `outfit_cozy.png` and `outfit_sunny.png`.
+Both shipped characters come with a Cozy knit scarf (`outfit_cozy.png`). Earning Cozy does not dress her by itself: once it is earned, pick Cozy from the Outfit menu. Sun's out has no art yet, so it does not appear in the menu even when earned. Draw more the same way: an outfit is a full-canvas `outfit_<name>.png` on the same canvas as `static.png`, drawn over her body and under her eyes. The names that pair with the two challenges are `outfit_cozy.png` and `outfit_sunny.png`.
 
 ## Character packs
 
@@ -55,7 +55,7 @@ Packs use the format of [mycat](https://github.com/yumiaura/mycat), a desktop pe
 | `idle1.gif`, `idle2.gif`, … | A random one plays now and then while she is awake. |
 | `click1.gif`, `click2.gif`, … | A random one plays when she is clicked. |
 | `hungry1.gif`, `hungry2.gif`, … | A random one plays now and then while she is hungry. |
-| `outfit_cozy.png`, `outfit_sunny.png`, … | A costume overlay, shown once its challenge is earned. Full canvas, drawn over the body and under the eyes. |
+| `outfit_cozy.png`, `outfit_sunny.png`, … | A costume overlay. Once its challenge is earned, pick it from the Outfit menu. Full canvas, drawn over the body and under the eyes. |
 | `config.json` | Sizes, eye positions and timings. Every key is optional. |
 
 Filenames are matched in lower case, and a numbered pool is the prefix followed by digits only (`idle1.gif`, `idle12.gif`, not `idle_a.gif`).
