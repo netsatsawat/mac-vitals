@@ -8,7 +8,7 @@ She hides while the menu-bar icon is off (background mode) and comes back with i
 
 ## What she does
 
-Four things happen on her face. Her eyes follow your pointer. She blinks every few seconds. Click her and she winks. And every minute or two (60 to 150 seconds, from her config) she winks on her own.
+Four things happen on her face. Her eyes follow your pointer. She blinks every few seconds. Click her and she either winks or turns shy, blushing and glancing away. And every minute or two (60 to 150 seconds, from her config) she either winks or smiles with her eyes closed. Which one she picks is random each time. These are ordinary pack clips (`click1.gif` and `click2.gif`, `idle1.gif` and `idle2.gif`), so a pack of your own can have as many reactions as you draw.
 
 Underneath, the engine tracks what the machine is doing, and the status line in the `⋯` menu reports it:
 
@@ -38,7 +38,7 @@ She can earn outfits by how the machine runs over time, read from the same histo
 
 An outfit only shows up when the character pack has a picture for it. Once the pack has the art, an Outfit item appears in the `⋯` menu: it lists any outfits you have earned, None, and the locked ones underneath as hints of what earns them. The numbers above are design choices, set in `CompanionChallengeRules`, not readings.
 
-Both shipped characters come with a Cozy knit scarf (`outfit_cozy.png`). Earning Cozy does not dress her by itself: once it is earned, pick Cozy from the Outfit menu. Sun's out has no art yet, so it does not appear in the menu even when earned. Draw more the same way: an outfit is a full-canvas `outfit_<name>.png` on the same canvas as `static.png`, drawn over her body and under her eyes. The names that pair with the two challenges are `outfit_cozy.png` and `outfit_sunny.png`.
+Both shipped characters come with an outfit for each challenge: a knit scarf for Cozy (`outfit_cozy.png`) and a straw sun hat for Sun's out (`outfit_sunny.png`). Earning one does not dress her by itself: once it is earned, pick it from the Outfit menu. An outfit a pack has no art for does not appear in the menu, even when earned. Draw more the same way: an outfit is a full-canvas `outfit_<name>.png` on the same canvas as `static.png`, drawn over her body and under her eyes. The names that pair with the two challenges are `outfit_cozy.png` and `outfit_sunny.png`.
 
 ## Character packs
 
