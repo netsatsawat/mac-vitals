@@ -43,6 +43,17 @@ func runSelfTest() -> Int32 {
     check(!procs.isEmpty, "top processes returned nothing")
     check(procs.allSatisfy { $0.cpuPercent >= 0 && $0.pid > 0 }, "a process value is out of range")
 
+    // The companion's pure logic, then its reading of this live sample.
+    for f in CompanionSelfCheck.run() { failures.append("companion: \(f)") }
+    var mood = CompanionMood()
+    let state = mood.update(s, idleSeconds: 0)
+    check(CompanionState.allCases.contains(state) && state != .sleepy && state != .asleep,
+          "companion state at idle 0 should not be sleepy or asleep: \(state)")
+    if s.thermal.pressure == "serious" || s.thermal.pressure == "critical" {
+        check(state == .throttling, "throttling machine should read as throttling, got \(state)")
+    }
+    check(s.battery.present || state != .hungry, "a machine with no battery cannot be hungry")
+
     if failures.isEmpty {
         print("selftest PASS: cpu \(Int(s.cpu.usage))%, gpu \(s.gpu.available ? "\(Int(s.gpu.usage))%" : "n/a"), "
               + "mem \(Int(s.memory.usedPercent))%, power \(s.power.available ? String(format: "%.1fW", s.power.totalWatts) : "n/a")")

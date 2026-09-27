@@ -19,6 +19,7 @@ swift build
 - `Sources/VitalsCore` is the engine and has no UI. The readers, the snapshot types, and the IOReport binding live here.
 - `Sources/vitals` is the headless CLI and the MCP server.
 - `Sources/MacVitals` is the SwiftUI app: menu-bar item, popover, and floating widget.
+- `Sources/VitalsCore/Companion` is the desktop companion's logic with no UI (pack config, fit and gaze geometry, the mood rules, the frame engine), checked by `CompanionSelfCheck`. `Sources/MacVitals/Companion*.swift` puts her on screen, and the shipped character pack lives under `Sources/MacVitals/Resources/Companion`. See [docs/COMPANION.md](docs/COMPANION.md).
 - `docs/` holds the PRD, the design mockup, the MCP guide, and the README images.
 - `scripts/` holds the app build, the icon and hero pipelines, the GPU calibration harness, and the MCP test.
 

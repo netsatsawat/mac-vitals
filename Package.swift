@@ -18,7 +18,11 @@ let package = Package(
         ),
         .executableTarget(
             name: "MacVitals",
-            dependencies: ["VitalsCore"]
+            dependencies: ["VitalsCore"],
+            // Companion character packs (folders of PNG/GIF/config.json). SwiftPM
+            // emits them as mac-vitals_MacVitals.bundle beside the binary, and
+            // scripts/build-app.sh copies that bundle into Contents/Resources.
+            resources: [.copy("Resources/Companion")]
         ),
         .testTarget(
             name: "VitalsCoreTests",

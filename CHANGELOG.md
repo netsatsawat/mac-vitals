@@ -6,6 +6,39 @@ All notable changes to this project are recorded here. The format follows
 
 ## [Unreleased]
 
+A face for the numbers.
+
+### Added
+
+- A desktop companion, off by default. Switch it on under ⋯ in the popover and a
+  small anime character stands on your desktop. Her eyes follow the pointer, she
+  blinks, a click makes her wink, and now and then she winks on her own. Drag her
+  anywhere and she stays there. The
+  line under the toggle says what the machine is doing: working when CPU or GPU
+  load holds at 70% or more, hot when the chip holds at 85 °C or more,
+  throttling the moment macOS says so, hungry at 20% battery, sleepy after a
+  minute with no input and asleep after five. A character pack that carries a
+  picture for a state shows it on her face. Two characters ship, Rin (the
+  default) and yuna, and both draw awake, blink and wink, so those other faces
+  are there for you to draw. Packs use
+  [mycat](https://github.com/yumiaura/mycat)'s format, so packs made for it work
+  here, and your own go in `~/Library/Application Support/MacVitals/Companion/`.
+  She hides while the menu-bar icon is off. See
+  [docs/COMPANION.md](docs/COMPANION.md).
+- Companion outfits, earned by how the machine runs. Two challenges to start:
+  Cozy (a week of the Mac staying cool) and Sun's out (a hot stretch or a spell
+  of throttling), read from the recorded history. An earned outfit stays earned.
+  A pack shows an outfit when it carries the matching `outfit_<name>.png`, and an
+  Outfit item in the ⋯ menu picks between the ones you have earned. Both shipped
+  characters come with a Cozy knit scarf; more are yours to draw.
+- Developer flags: `MacVitals --render-companion <png>` draws a strip of every
+  state and gaze for a pack without a display (add `--companion-outfit <name>`
+  to check a costume), and `--companion-probe <png>` dumps the live panel's
+  layers and geometry.
+- `vitals --selftest` now runs the companion's logic checks (config decoding,
+  fit and gaze geometry, the mood latches, the frame engine) alongside the
+  sensor bounds.
+
 ## [0.2.1] - 2026-09-10
 
 Reading the numbers at a glance, and catching a run that has started to

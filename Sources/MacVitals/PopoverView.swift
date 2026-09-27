@@ -8,10 +8,16 @@ struct PopoverView: View {
     var onToggleWidget: () -> Void
     var onHideMenuBar: () -> Void
     var onQuit: () -> Void
+    /// The companion's one-line state for the ⋯ menu, read when the menu opens.
+    var companionStatus: () -> String = { "Off" }
+    /// The outfits the current pack offers, earned or locked, read when the menu opens.
+    var companionOutfits: () -> [CompanionController.OutfitItem] = { [] }
     @Environment(\.openWindow) private var openWindow
     @AppStorage("menuBarFull") private var menuBarFull: Bool = true
     @AppStorage("didPromptLoginItem") private var didPromptLoginItem: Bool = false
     @AppStorage("runInBackground") private var runInBackground: Bool = false
+    @AppStorage("companionEnabled") private var companionEnabled: Bool = false
+    @AppStorage("companionOutfit") private var companionOutfit: String = ""
 
     private func openMainWindow() {
         NSApp.setActivationPolicy(.regular) // show the Dock icon while the window is open
@@ -178,6 +184,29 @@ struct PopoverView: View {
                 Text(runInBackground ? "Menu bar icon hidden, still recording"
                                      : (menuBarFull ? "Showing CPU, GPU, memory, network"
                                                     : "Showing CPU and GPU"))
+                Divider()
+                Toggle("Companion", isOn: $companionEnabled)
+                    .disabled(runInBackground)
+                Text(companionEnabled ? companionStatus()
+                                      : "A small character on your desktop. Her eyes follow the pointer, and this line reports what your Mac is doing.")
+                if companionEnabled {
+                    let outfits = companionOutfits()
+                    if !outfits.isEmpty {
+                        Menu("Outfit") {
+                            Picker("Outfit", selection: $companionOutfit) {
+                                Text("None").tag("")
+                                ForEach(outfits.filter(\.unlocked)) { Text($0.title).tag($0.id) }
+                            }
+                            .pickerStyle(.inline)
+                            .labelsHidden()
+                            let locked = outfits.filter { !$0.unlocked }
+                            if !locked.isEmpty {
+                                Divider()
+                                ForEach(locked) { Text("\($0.title): \($0.detail)") }
+                            }
+                        }
+                    }
+                }
                 Divider()
                 Button("Quit Mac Vitals", action: onQuit)
             } label: {
