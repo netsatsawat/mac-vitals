@@ -43,11 +43,54 @@ enum Palette {
     }
 }
 
+extension EnvironmentValues {
+    /// True while RenderTool draws a view through ImageRenderer. ImageRenderer
+    /// cannot draw AppKit-backed views and paints a placeholder in their place,
+    /// so the views that wrap one draw a SwiftUI stand-in instead. The live app
+    /// never sets it.
+    var isOfflineRender: Bool {
+        get { self[OfflineRenderKey.self] }
+        set { self[OfflineRenderKey.self] = newValue }
+    }
+}
+
+private struct OfflineRenderKey: EnvironmentKey {
+    static let defaultValue = false
+}
+
 /// The system blur behind a surface, so the widget and popover read as native
-/// vibrancy rather than a flat panel.
-struct VisualEffect: NSViewRepresentable {
+/// vibrancy rather than a flat panel. In an offline render it is a flat fill.
+struct VisualEffect: View {
     var material: NSVisualEffectView.Material = .hudWindow
     var blending: NSVisualEffectView.BlendingMode = .behindWindow
+    @Environment(\.isOfflineRender) private var offline
+
+    var body: some View {
+        if offline {
+            Rectangle().fill(flat)
+        } else {
+            SystemBlur(material: material, blending: blending)
+        }
+    }
+
+    /// The live material's colour over an ordinary window background, measured
+    /// on macOS 26 in each appearance. The real blur picks up whatever sits
+    /// behind it, so this is the common case, not every case.
+    private var flat: Color {
+        switch material {
+        case .popover:
+            Palette.dynamic(light: NSColor(srgbRed: 235/255, green: 236/255, blue: 237/255, alpha: 1),
+                            dark: NSColor(srgbRed: 47/255, green: 48/255, blue: 49/255, alpha: 1))
+        default: // .hudWindow, the widget
+            Palette.dynamic(light: NSColor(srgbRed: 238/255, green: 238/255, blue: 239/255, alpha: 1),
+                            dark: NSColor(srgbRed: 44/255, green: 45/255, blue: 47/255, alpha: 1))
+        }
+    }
+}
+
+private struct SystemBlur: NSViewRepresentable {
+    var material: NSVisualEffectView.Material
+    var blending: NSVisualEffectView.BlendingMode
 
     func makeNSView(context: Context) -> NSVisualEffectView {
         let v = NSVisualEffectView()
