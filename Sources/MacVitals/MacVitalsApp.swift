@@ -20,8 +20,7 @@ struct MacVitalsApp: App {
                 onToggleWidget: { delegate.panel.toggle(store: store) },
                 onHideMenuBar: { delegate.enterBackgroundMode() },
                 onQuit: { NSApp.terminate(nil) },
-                companionStatus: { delegate.companion.statusText },
-                companionOutfits: { delegate.companion.outfitItems() }
+                companion: delegate.companion
             )
         } label: {
             MenuBarLabel(store: store)
