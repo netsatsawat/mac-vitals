@@ -10,8 +10,7 @@ enum RenderTool {
                                 minutes: syntheticSamples(1440, step: 60),
                                 hours: syntheticSamples(370 * 24, step: 3600),
                                 processes: syntheticProcesses())
-        let view = MainView(store: store, scrolls: false, initialRange: range).frame(width: 840, height: 940)
-        render(view, to: path)
+        render(fullWindow(store: store, range: range), to: path)
     }
 
     /// A freshly-started machine: only a few minutes of history against a 24h
@@ -19,8 +18,16 @@ enum RenderTool {
     static func renderSparse(to path: String) {
         let store = SampleStore(seed: Array(synthetic().suffix(180)),
                                 minutes: syntheticSamples(8, step: 60), hours: [])
-        let view = MainView(store: store, scrolls: false, initialRange: .h24).frame(width: 840, height: 940)
-        render(view, to: path)
+        render(fullWindow(store: store, range: .h24), to: path)
+    }
+
+    /// The window at its default width with the scroll area unrolled. The height
+    /// follows the content: a fixed height centers taller content and cuts off
+    /// the header and the top chart row.
+    private static func fullWindow(store: SampleStore, range: HistoryRange) -> some View {
+        MainView(store: store, scrolls: false, initialRange: range)
+            .frame(width: 840)
+            .fixedSize(horizontal: false, vertical: true)
     }
 
     /// Plausible aggregated samples spaced `step` seconds apart, for rendering the
