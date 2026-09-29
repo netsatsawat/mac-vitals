@@ -141,25 +141,30 @@ struct PopoverView: View {
 
     private func footerButton(_ icon: String, _ label: String, _ action: @escaping () -> Void) -> some View {
         Button(action: action) {
-            HStack(spacing: 5) {
+            HStack(spacing: 4) {
                 Image(systemName: icon).font(.system(size: 10, weight: .semibold))
                 Text(label).font(.system(size: 11, weight: .medium))
             }
             .foregroundStyle(Palette.ink2)
-            .padding(.vertical, 3).padding(.horizontal, 8)
+            .padding(.vertical, 3).padding(.horizontal, 6)
             .background(RoundedRectangle(cornerRadius: 7, style: .continuous).fill(Palette.track))
         }
         .buttonStyle(.plain)
+        .fixedSize()
     }
 
+    /// Sized so the widest state, "Throttling", still fits on one line beside
+    /// both buttons and the ⋯. Nothing here may wrap: at the old spacing the
+    /// buttons broke mid-word ("Widge t").
     private var footer: some View {
         let state = pressureState(store.latest)
-        return HStack(spacing: 8) {
+        return HStack(spacing: 6) {
             HStack(spacing: 5) {
                 Circle().fill(state.1).frame(width: 7, height: 7)
                 Text(state.0).font(.system(size: 10.5, weight: .semibold)).foregroundStyle(Palette.ink2)
             }
-            Spacer(minLength: 8)
+            .fixedSize()
+            Spacer(minLength: 0)
             footerButton("square.grid.2x2", "Widget", onToggleWidget)
             footerButton("macwindow", "Open", openMainWindow)
             MoreMenu(companion: companion, onHideMenuBar: onHideMenuBar, onQuit: onQuit)
@@ -190,6 +195,7 @@ struct MoreMenu: View, Equatable {
     /// menu opens (System Settings may have changed it), and when the popover's
     /// first-run nudge answers.
     @State private var loginEnabled = LoginItem.isEnabled
+    @Environment(\.isOfflineRender) private var offline
 
     /// A redraw of the popover never needs to redraw this menu: the closures
     /// do the same thing every time, and the companion is one long-lived
@@ -198,6 +204,21 @@ struct MoreMenu: View, Equatable {
     nonisolated static func == (lhs: MoreMenu, rhs: MoreMenu) -> Bool { true }
 
     var body: some View {
+        if offline { renderedButton } else { menu }
+    }
+
+    /// The ⋯ as the live popover shows it, for offline renders, which cannot
+    /// draw a Menu. The pop-up button behind the menu ignores its label's frame
+    /// and colour: it draws the symbol in the system label colour in a 20 by 14
+    /// slot. This copies that button, not the label below.
+    private var renderedButton: some View {
+        Image(systemName: "ellipsis")
+            .font(.system(size: 13, weight: .semibold))
+            .foregroundStyle(.primary)
+            .frame(width: 20, height: 14)
+    }
+
+    private var menu: some View {
         Menu {
             Toggle("Launch at Login", isOn: Binding(
                 get: { loginEnabled },

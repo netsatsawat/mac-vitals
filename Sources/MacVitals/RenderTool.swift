@@ -11,9 +11,7 @@ enum RenderTool {
                                 hours: syntheticSamples(370 * 24, step: 3600),
                                 processes: syntheticProcesses())
         let view = MainView(store: store, scrolls: false, initialRange: range).frame(width: 840, height: 940)
-        let renderer = ImageRenderer(content: view)
-        renderer.scale = 2
-        write(renderer, to: path)
+        render(view, to: path)
     }
 
     /// A freshly-started machine: only a few minutes of history against a 24h
@@ -22,9 +20,7 @@ enum RenderTool {
         let store = SampleStore(seed: Array(synthetic().suffix(180)),
                                 minutes: syntheticSamples(8, step: 60), hours: [])
         let view = MainView(store: store, scrolls: false, initialRange: .h24).frame(width: 840, height: 940)
-        let renderer = ImageRenderer(content: view)
-        renderer.scale = 2
-        write(renderer, to: path)
+        render(view, to: path)
     }
 
     /// Plausible aggregated samples spaced `step` seconds apart, for rendering the
@@ -87,18 +83,14 @@ enum RenderTool {
             currentText: "↓ 8.1 MB/s", note: nil, previewHoverX: 150)
         let view = HStack(spacing: 14) { cpu; net }
             .padding(16).frame(width: 700).background(Color(nsColor: .windowBackgroundColor))
-        let renderer = ImageRenderer(content: view)
-        renderer.scale = 2
-        write(renderer, to: path)
+        render(view, to: path)
     }
 
     static func renderPopover(to path: String) {
         let store = SampleStore(seed: synthetic())
         let view = PopoverView(store: store, onToggleWidget: {}, onHideMenuBar: {}, onQuit: {},
                                companion: CompanionController()).fixedSize()
-        let renderer = ImageRenderer(content: view)
-        renderer.scale = 2
-        write(renderer, to: path)
+        render(view, to: path)
     }
 
     /// Preview of the menu-bar readout on a mock dark bar (the real bar renders it
@@ -117,9 +109,7 @@ enum RenderTool {
             .padding(.horizontal, 10).padding(.vertical, 5)
             .background(Color(red: 0.13, green: 0.13, blue: 0.15))
             .fixedSize()
-        let renderer = ImageRenderer(content: view)
-        renderer.scale = 3
-        write(renderer, to: path)
+        render(view, scale: 3, to: path)
     }
 
     /// A strip of the companion's frames, composed through the same layout the
@@ -245,7 +235,11 @@ enum RenderTool {
         }
     }
 
-    private static func write(_ renderer: ImageRenderer<some View>, to path: String) {
+    /// Draws `view` with the offline switch on, so views that wrap AppKit draw
+    /// their SwiftUI stand-ins instead of ImageRenderer's placeholder art.
+    private static func render(_ view: some View, scale: CGFloat = 2, to path: String) {
+        let renderer = ImageRenderer(content: view.environment(\.isOfflineRender, true))
+        renderer.scale = scale
         guard let image = renderer.nsImage,
               let tiff = image.tiffRepresentation,
               let rep = NSBitmapImageRep(data: tiff),

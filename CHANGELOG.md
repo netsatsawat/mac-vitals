@@ -6,6 +6,12 @@ All notable changes to this project are recorded here. The format follows
 
 ## [Unreleased]
 
+### Fixed
+
+- The Widget and Open buttons at the foot of the popover no longer break
+  mid-word onto two lines ("Widge t"). The footer is a little tighter, so both
+  labels fit on one line next to every status, including "Throttling".
+
 ## [0.4.1] - 2026-09-29
 
 A fix for the ⋯ menu. Still a normal user, no `sudo`.
