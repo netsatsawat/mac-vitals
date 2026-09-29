@@ -6,6 +6,14 @@ All notable changes to this project are recorded here. The format follows
 
 ## [Unreleased]
 
+### Fixed
+
+- The ⋯ menu no longer rebuilds itself while it is open. The popover redraws
+  every second to show fresh readings, and the menu redrew with it, which reset
+  its submenus under the pointer and made the Outfit list hard to pick from. It
+  now redraws only when one of its own settings changes, and a change in the
+  companion's status waits until the menu closes.
+
 ## [0.4.0] - 2026-09-28
 
 A sun hat for the hot days, and two new reactions. Still a normal user, no

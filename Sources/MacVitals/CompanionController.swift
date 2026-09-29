@@ -14,7 +14,7 @@ import VitalsCore
 /// the last three seconds. Everything stops while the panel is occluded, the
 /// display sleeps or the session is switched away.
 @MainActor
-final class CompanionController {
+final class CompanionController: ObservableObject {
     static let enabledKey = "companionEnabled"
     static let nameKey = "companionName"
     static let originKey = "companionOrigin"
@@ -42,7 +42,15 @@ final class CompanionController {
     private var appliedOutfit = ""
     private var challengeTick = 0
     private var subscriptions = Set<AnyCancellable>()
+    /// Window and workspace observers, added by show() and removed by hide().
     private var observers: [NSObjectProtocol] = []
+    /// Observers that live as long as the controller: defaults and menu tracking.
+    private var lifetimeObservers: [NSObjectProtocol] = []
+    /// How many menus are tracking right now. While any is open, menu-facing
+    /// values are held back, because publishing one rebuilds the open ⋯ menu and
+    /// resets its submenu under the pointer. A depth, not a flag, so nested
+    /// tracking cannot end it early.
+    private var menuDepth = 0
 
     /// One line for the ⋯ menu.
     var statusText: String {
@@ -54,7 +62,22 @@ final class CompanionController {
 
     /// One outfit and whether it is earned yet, for the ⋯ menu. Only outfits the
     /// current pack has art for appear.
-    struct OutfitItem: Identifiable { let id: String; let title: String; let detail: String; let unlocked: Bool }
+    struct OutfitItem: Identifiable, Equatable { let id: String; let title: String; let detail: String; let unlocked: Bool }
+
+    /// What the ⋯ menu shows, published only when it changes. The menu watches
+    /// these instead of reading them on every redraw, because the popover
+    /// redraws once a second and an open menu rebuilt under the pointer resets
+    /// its submenus.
+    @Published private(set) var status = "Off"
+    @Published private(set) var outfits: [OutfitItem] = []
+
+    private func publish() {
+        guard menuDepth == 0 else { return }   // sent once the menu closes
+        let s = statusText
+        if s != status { status = s }
+        let o = outfitItems()
+        if o != outfits { outfits = o }
+    }
 
     func outfitItems() -> [OutfitItem] {
         guard let pack else { return [] }
@@ -71,10 +94,25 @@ final class CompanionController {
             .dropFirst()
             .sink { [weak self] snap in self?.tick(snap) }
             .store(in: &subscriptions)
-        observers.append(NotificationCenter.default.addObserver(
+        let nc = NotificationCenter.default
+        lifetimeObservers.append(nc.addObserver(
             forName: UserDefaults.didChangeNotification, object: nil, queue: .main
         ) { [weak self] _ in
             MainActor.assumeIsolated { self?.sync() }
+        })
+        lifetimeObservers.append(nc.addObserver(
+            forName: NSMenu.didBeginTrackingNotification, object: nil, queue: .main
+        ) { [weak self] _ in
+            MainActor.assumeIsolated { self?.menuDepth += 1 }
+        })
+        lifetimeObservers.append(nc.addObserver(
+            forName: NSMenu.didEndTrackingNotification, object: nil, queue: .main
+        ) { [weak self] _ in
+            MainActor.assumeIsolated {
+                guard let self else { return }
+                self.menuDepth = max(0, self.menuDepth - 1)
+                self.publish()
+            }
         })
         sync()
     }
@@ -89,6 +127,8 @@ final class CompanionController {
         if !wanted && panel != nil { hide() }
         // A change to the chosen outfit (from the menu) lands here too.
         if panel != nil, selectedOutfit != appliedOutfit { applyOutfit() }
+        // So does a newly earned outfit, which evaluateChallenges saves as a default.
+        publish()
     }
 
     private var selectedOutfit: String { UserDefaults.standard.string(forKey: Self.outfitKey) ?? "" }
@@ -232,11 +272,11 @@ final class CompanionController {
         // Drop the rasters while she is off, and so a changed `companionName`
         // takes effect on the next switch-on.
         pack = nil
-        // Keep the store subscription and the defaults observer (they were added
-        // in attach); drop only the window and workspace observers.
+        // Drop the window and workspace observers show() added. The store
+        // subscription and the lifetime observers stay.
         let nc = NotificationCenter.default, wnc = NSWorkspace.shared.notificationCenter
-        for o in observers.dropFirst() { nc.removeObserver(o); wnc.removeObserver(o) }
-        observers = Array(observers.prefix(1))
+        for o in observers { nc.removeObserver(o); wnc.removeObserver(o) }
+        observers = []
     }
 
     /// The saved spot, or bottom-right above the Dock, clamped onto a screen.
@@ -274,6 +314,7 @@ final class CompanionController {
         challengeTick += 1
         if challengeTick % 60 == 0 { evaluateChallenges() }
         if !paused { refresh() }
+        publish()
     }
 
     /// A click reacts through the engine, then re-reads the idle-driven states
@@ -288,6 +329,7 @@ final class CompanionController {
         engine.update(active: mood.active, now: now())
         self.engine = engine
         refresh()
+        publish()
     }
 
     /// Ask the engine for the frame, put it on screen, arm the one timer for its
@@ -375,5 +417,6 @@ final class CompanionController {
         } else {
             refresh()
         }
+        publish()
     }
 }

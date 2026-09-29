@@ -8,16 +8,10 @@ struct PopoverView: View {
     var onToggleWidget: () -> Void
     var onHideMenuBar: () -> Void
     var onQuit: () -> Void
-    /// The companion's one-line state for the ⋯ menu, read when the menu opens.
-    var companionStatus: () -> String = { "Off" }
-    /// The outfits the current pack offers, earned or locked, read when the menu opens.
-    var companionOutfits: () -> [CompanionController.OutfitItem] = { [] }
+    /// The companion, whose published status and outfits the ⋯ menu shows.
+    var companion: CompanionController
     @Environment(\.openWindow) private var openWindow
-    @AppStorage("menuBarFull") private var menuBarFull: Bool = true
     @AppStorage("didPromptLoginItem") private var didPromptLoginItem: Bool = false
-    @AppStorage("runInBackground") private var runInBackground: Bool = false
-    @AppStorage("companionEnabled") private var companionEnabled: Bool = false
-    @AppStorage("companionOutfit") private var companionOutfit: String = ""
 
     private func openMainWindow() {
         NSApp.setActivationPolicy(.regular) // show the Dock icon while the window is open
@@ -168,59 +162,106 @@ struct PopoverView: View {
             Spacer(minLength: 8)
             footerButton("square.grid.2x2", "Widget", onToggleWidget)
             footerButton("macwindow", "Open", openMainWindow)
-            Menu {
-                Toggle("Launch at Login", isOn: Binding(
-                    get: { LoginItem.isEnabled },
-                    set: { LoginItem.setEnabled($0); didPromptLoginItem = true }
-                ))
-                Toggle("Show Menu Bar Icon", isOn: Binding(
-                    get: { !runInBackground },
-                    set: { show in if show { runInBackground = false } else { onHideMenuBar() } }
-                ))
-                Divider()
-                Toggle("Full menu-bar readout", isOn: $menuBarFull)
-                    .keyboardShortcut("m", modifiers: [.command, .shift])
-                    .disabled(runInBackground)
-                Text(runInBackground ? "Menu bar icon hidden, still recording"
-                                     : (menuBarFull ? "Showing CPU, GPU, memory, network"
-                                                    : "Showing CPU and GPU"))
-                Divider()
-                Toggle("Companion", isOn: $companionEnabled)
-                    .disabled(runInBackground)
-                Text(companionEnabled ? companionStatus()
-                                      : "A small character on your desktop. Her eyes follow the pointer, and this line reports what your Mac is doing.")
-                if companionEnabled {
-                    let outfits = companionOutfits()
-                    if !outfits.isEmpty {
-                        Menu("Outfit") {
-                            Picker("Outfit", selection: $companionOutfit) {
-                                Text("None").tag("")
-                                ForEach(outfits.filter(\.unlocked)) { Text($0.title).tag($0.id) }
-                            }
-                            .pickerStyle(.inline)
-                            .labelsHidden()
-                            let locked = outfits.filter { !$0.unlocked }
-                            if !locked.isEmpty {
-                                Divider()
-                                ForEach(locked) { Text("\($0.title): \($0.detail)") }
-                            }
-                        }
-                    }
-                }
-                Divider()
-                Button("Quit Mac Vitals", action: onQuit)
-            } label: {
-                Image(systemName: "ellipsis")
-                    .font(.system(size: 13, weight: .semibold))
-                    .foregroundStyle(Palette.ink2)
-                    .frame(width: 24, height: 22)
-                    .contentShape(Rectangle())
-            }
-            .menuStyle(.borderlessButton)
-            .menuIndicator(.hidden)
-            .fixedSize()
+            MoreMenu(companion: companion, onHideMenuBar: onHideMenuBar, onQuit: onQuit)
+                .equatable()
         }
         .padding(.top, 12)
         .overlay(alignment: .top) { Rectangle().fill(Palette.hair).frame(height: 0.5) }
+    }
+}
+
+/// The ⋯ menu, as its own view so the popover's once-a-second redraw does not
+/// rebuild it. A menu rebuilt while it is open resets its submenus under the
+/// pointer, which made the Outfit list hard to pick from. It redraws only when
+/// its own settings change or the companion publishes a new status or outfit
+/// list, which is rare.
+struct MoreMenu: View, Equatable {
+    @ObservedObject var companion: CompanionController
+    var onHideMenuBar: () -> Void
+    var onQuit: () -> Void
+    @AppStorage("menuBarFull") private var menuBarFull: Bool = true
+    @AppStorage("didPromptLoginItem") private var didPromptLoginItem: Bool = false
+    @AppStorage("runInBackground") private var runInBackground: Bool = false
+    @AppStorage("companionEnabled") private var companionEnabled: Bool = false
+    @AppStorage("companionOutfit") private var companionOutfit: String = ""
+    /// The login item's real state. It lives in the system, not in a setting this
+    /// view observes, and the menu no longer redraws every second to catch up, so
+    /// it is kept here and re-read when it can have changed: after a click, as the
+    /// menu opens (System Settings may have changed it), and when the popover's
+    /// first-run nudge answers.
+    @State private var loginEnabled = LoginItem.isEnabled
+
+    /// A redraw of the popover never needs to redraw this menu: the closures
+    /// do the same thing every time, and the companion is one long-lived
+    /// object. What does change reaches the menu through its own settings and
+    /// the companion's published values.
+    nonisolated static func == (lhs: MoreMenu, rhs: MoreMenu) -> Bool { true }
+
+    var body: some View {
+        Menu {
+            Toggle("Launch at Login", isOn: Binding(
+                get: { loginEnabled },
+                set: {
+                    LoginItem.setEnabled($0)
+                    didPromptLoginItem = true
+                    // The real result, which can differ from the request
+                    // (macOS may ask for approval first).
+                    refreshLogin()
+                }
+            ))
+            Toggle("Show Menu Bar Icon", isOn: Binding(
+                get: { !runInBackground },
+                set: { show in if show { runInBackground = false } else { onHideMenuBar() } }
+            ))
+            Divider()
+            Toggle("Full menu-bar readout", isOn: $menuBarFull)
+                .keyboardShortcut("m", modifiers: [.command, .shift])
+                .disabled(runInBackground)
+            Text(runInBackground ? "Menu bar icon hidden, still recording"
+                                 : (menuBarFull ? "Showing CPU, GPU, memory, network"
+                                                : "Showing CPU and GPU"))
+            Divider()
+            Toggle("Companion", isOn: $companionEnabled)
+                .disabled(runInBackground)
+            Text(companionEnabled ? companion.status
+                                  : "A small character on your desktop. Her eyes follow the pointer, and this line reports what your Mac is doing.")
+            if companionEnabled && !companion.outfits.isEmpty {
+                Menu("Outfit") {
+                    Picker("Outfit", selection: $companionOutfit) {
+                        Text("None").tag("")
+                        ForEach(companion.outfits.filter(\.unlocked)) { Text($0.title).tag($0.id) }
+                    }
+                    .pickerStyle(.inline)
+                    .labelsHidden()
+                    let locked = companion.outfits.filter { !$0.unlocked }
+                    if !locked.isEmpty {
+                        Divider()
+                        ForEach(locked) { Text("\($0.title): \($0.detail)") }
+                    }
+                }
+            }
+            Divider()
+            Button("Quit Mac Vitals", action: onQuit)
+        } label: {
+            Image(systemName: "ellipsis")
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundStyle(Palette.ink2)
+                .frame(width: 24, height: 22)
+                .contentShape(Rectangle())
+        }
+        .menuStyle(.borderlessButton)
+        .menuIndicator(.hidden)
+        .fixedSize()
+        .onReceive(NotificationCenter.default.publisher(for: NSMenu.didBeginTrackingNotification)) { _ in
+            refreshLogin()
+        }
+        .onChange(of: didPromptLoginItem) { refreshLogin() }
+    }
+
+    /// Only assigns on a real change, so a menu opening with nothing new does
+    /// not redraw itself.
+    private func refreshLogin() {
+        let real = LoginItem.isEnabled
+        if real != loginEnabled { loginEnabled = real }
     }
 }
