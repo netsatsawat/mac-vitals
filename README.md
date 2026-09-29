@@ -49,7 +49,7 @@ It shows up three ways, over one engine:
 Open it from the popover for every metric charted over a selectable range, from one minute of live detail up to a year, plus year-to-date. Hover any chart and a guide line follows the mouse, a dot lands on each line, and a small card reads out the exact time and value at that point. Three resolutions keep it cheap: per-second detail for the last hour, one-minute averages for about a week, and one-hour averages for over a year. Each resolution is written to its own file, so every range survives a quit and the long ones fill from what is already on disk. A few MB in all. How it holds together across restarts is written up in [docs/history-persistence.md](docs/history-persistence.md).
 
 <div align="center">
-<img src="docs/window.png" alt="The Mac Vitals window: CPU, GPU, memory, power, network, and disk charted over the last fifteen minutes" width="840">
+<img src="docs/window.png" alt="The Mac Vitals window: CPU, GPU, memory, power, network, and disk charted over the last 24 hours" width="840">
 </div>
 
 ## Install
